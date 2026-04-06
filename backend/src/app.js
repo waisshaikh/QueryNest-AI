@@ -1,6 +1,6 @@
 import cookieParser from 'cookie-parser';
 import express from 'express';
-import authRouter from './routes/auth.route';
+import authRouter from './routes/auth.route.js';
 
 const app = express()
 
