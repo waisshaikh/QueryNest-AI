@@ -3,7 +3,7 @@ import userModel from "../models/user.model.js";
 import Jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
 
-export async function register() {
+export async function register(req,res) {
     const { username, email, password } = req.body
 
     const userAlreadyExist = await userModel.findOne({ $or: [{ username }, { email }] });
