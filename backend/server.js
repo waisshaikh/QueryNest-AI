@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ path: "./.env" });
 import ConnectToDb from "./src/config/DatabseConnetion.js";
 import app from "./src/app.js"
 
