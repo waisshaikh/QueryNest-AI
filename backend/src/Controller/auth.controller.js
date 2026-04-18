@@ -18,11 +18,19 @@ export async function register(req,res) {
 
     const User = await userModel.create({ username, email, password })
 
+    const emailVeryficationToken = Jwt.sign({
+        email: User.email,
+    },process.env.JWT_SECRET)
+
     await sendEmail({
         to: email,
         subject: "Welcome To queryNest",
         text: `Hi ${username},\n\n Thankyou For Registering at QueryNest-AI We are Exited to have you on! `,
-        html: `<p>Hi ${username} , </p><p> Thankyou for registering at <strong>QueryNext-AI</strong> we are exited you on board!</p> <p>Best Regards <br> QueryNest Team </br> </p>`
+        html: `<p>Hi ${username} , </p><p> Thankyou for registering at <strong>QueryNext-AI</strong> we are exited you on board!</p> 
+        <p>Please verify your email by clicking the link below:</p>
+        <a href="http://localhost:3000/api/auth/verify-email?token=${emailVeryficationToken}">Verify Email</a> 
+
+        <p>Best Regards <br> QueryNest Team </br> </p>`
     })
 
     res.status(201).json({
