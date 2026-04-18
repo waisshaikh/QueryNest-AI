@@ -1,7 +1,12 @@
 import { syncIndexes } from "mongoose";
+
 import userModel from "../models/user.model.js";
 import Jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
+
+
+
+// register api
 
 export async function register(req,res) {
     const { username, email, password } = req.body
@@ -45,6 +50,53 @@ export async function register(req,res) {
 };
 
 
+
+
+// Login Api
+export async function login(req,res) {
+    const { email, password } = req.body;
+
+    const user = await userModel.findOne({ email });
+
+
+    if (!user) {
+        return res.status(400).json({
+            message: "User not exist with this credentials",
+            success: false,
+        });
+
+        const ispasswordCorrect = await user.comparePassword(password);
+
+        if (!ispasswordCorrect) {
+            return res.status(400).json({
+                message: "Invalid Password",
+                error: "Invalid Password",
+                success: false,
+            });  
+        }    
+    }
+
+    if (!user.isVerified) {
+        return res.status(400).json({
+            message: "Please verify your email to login",
+            success: false,
+        });
+    }
+    
+    const token = Jwt.sign({
+        userId: user._id,
+        email: user.email,
+    }, process.env.JWT_SECRET, { expiresIn: "7d" });   
+    
+    res.cookie("token", token).status(200).json({
+        message: "Login Successfully",
+        success: true,
+    });
+         
+}
+     
+
+// email verify
 export async function verifyEmail(req, res) {
     try {
         const { token } = req.query;
