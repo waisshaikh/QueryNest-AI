@@ -53,48 +53,88 @@ export async function register(req,res) {
 
 
 // Login Api
-export async function login(req,res) {
-    const { email, password } = req.body;
+export async function login(req, res) {
+    try {
+        const { email, password } = req.body;
 
-    const user = await userModel.findOne({ email });
+        console.log("LOGIN BODY:", req.body); // debug
 
+        const user = await userModel.findOne({ email });
 
-    if (!user) {
-        return res.status(400).json({
-            message: "User not exist with this credentials",
-            success: false,
-        });
+        console.log("USER FOUND:", user); // debug
 
-        const ispasswordCorrect = await user.comparePassword(password);
+        // 1. Check user
+        if (!user) {
+            return res.status(400).json({
+                message: "User not exist",
+                success: false,
+            });
+        }
 
-        if (!ispasswordCorrect) {
+        // 2. Check password
+        const isPasswordCorrect = await user.comparePassword(password);
+
+        console.log("PASSWORD MATCH:", isPasswordCorrect); // debug
+
+        if (!isPasswordCorrect) {
             return res.status(400).json({
                 message: "Invalid Password",
-                error: "Invalid Password",
                 success: false,
-            });  
-        }    
-    }
+            });
+        }
 
-    if (!user.isVerified) {
-        return res.status(400).json({
-            message: "Please verify your email to login",
-            success: false,
+        // 3. Check verification
+        console.log("verified:", user.verified);
+
+        if (!user.verified) {
+            return res.status(400).json({
+                message: "Please verify your email",
+                success: false,
+            });
+        }
+
+        // 4. Token
+        const token = Jwt.sign(
+            { userId: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+
+        return res.cookie("token", token).status(200).json({
+            message: "Login Successfully",
+            success: true,
+        });
+
+    } catch (error) {
+        console.log("LOGIN ERROR:", error);
+        return res.status(500).json({
+            message: "Server Error",
+            error: error.message,
         });
     }
-    
-    const token = Jwt.sign({
-        userId: user._id,
-        email: user.email,
-    }, process.env.JWT_SECRET, { expiresIn: "7d" });   
-    
-    res.cookie("token", token).status(200).json({
-        message: "Login Successfully",
-        success: true,
-    });
-         
 }
-     
+    
+
+export async function getme(req,res) {
+    const userid = req.user._id
+
+    const user = await userModel.findOne(userid).select("-password")
+
+    if(!user){
+        return res.status(404).json({
+            message:"User Not Found",
+            success:false,
+        })
+    }
+    return res.status(200).json({
+        message:"User Found",
+        success:true,
+        user
+    })
+    
+
+
+}
 
 // email verify
 export async function verifyEmail(req, res) {
@@ -119,7 +159,7 @@ export async function verifyEmail(req, res) {
             });
         }
 
-        user.isVerified = true;
+        user.verified = true;
         await user.save();
 
         const html = `
