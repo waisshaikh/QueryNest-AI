@@ -132,8 +132,6 @@ export async function getme(req,res) {
         user
     })
     
-
-
 }
 
 // email verify
