@@ -1,13 +1,18 @@
 import dotenv from "dotenv";
-dotenv.config()
+dotenv.config();
 
 import ConnectToDb from "./src/config/DatabseConnetion.js";
-import {testAi } from "./src/services/ai.service.js";
+import { testAi } from "./src/services/ai.service.js";
 
-import app from "./src/app.js"
+import app from "./src/app.js";
 
 ConnectToDb();
-testAi();
+
+if (process.env.RUN_AI_STARTUP_TEST === "true") {
+    testAi().catch((error) => {
+        console.error("AI startup test failed:", error.message);
+    });
+}
 
 
 
