@@ -6,9 +6,9 @@ import RouterSetup from "./app/App.router.jsx";
 import store from "./app/App.store";
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <Provider store={store}>
-      <RouterSetup />
-    </Provider>
-  </StrictMode>,
+
+  <Provider store={store}>
+    <RouterSetup />
+  </Provider>,
+
 );
