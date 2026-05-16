@@ -1,16 +1,22 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import App from "./App";
-import Login from "../features/auth/Login";
-import Register from "../features/auth/Register";
+import { createBrowserRouter } from "react-router";
+import Login from "../features/auth/pages/Login";
+import Register from "../features/auth/pages/Register";
+import Dashboard from "../features/chat/pages/Dashboard";
+import Protected from "../features/auth/components/Protected";
+import { Navigate } from "react-router";
 
-export default function RouterSetup() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
+export const router = createBrowserRouter([
+    {
+        path: "/login",
+        element: <Login />
+    },
+    {
+        path: "/register",
+        element: <Register />
+    },
+    {
+        path: "/",
+        element: <h1>Home Page</h1>
+    },
+    
+])

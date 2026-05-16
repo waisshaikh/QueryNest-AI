@@ -1,68 +1,98 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { useAuth } from '../hook/useAuth'
+import { useSelector } from 'react-redux'
+import { Navigate } from 'react-router'
 
-export default function Login() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
 
-  // Handle Input Change
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+const Login = () => {
+    const [ email, setEmail ] = useState('')
+    const [ password, setPassword ] = useState('')
 
-  // Handle Submit
-  const handleSubmit = (e) => {
-    e.preventDefault();
+    const user = useSelector(state => state.auth.user)
+    const loading = useSelector(state => state.auth.loading)
 
-    console.log("Login Data:", formData);
+    const { handleLogin } = useAuth()
 
-    // API Call Here
-  };
+    const navigate = useNavigate()
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A] text-white">
-      <div className="w-full max-w-md p-8 rounded-2xl bg-[#121212] shadow-lg border border-gray-800">
-        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
+    const submitForm = async (event) => {
+        event.preventDefault()
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full p-3 rounded-lg bg-[#1E1E1E] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          />
+        const payload = {
+            email,
+            password,
+        }
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full p-3 rounded-lg bg-[#1E1E1E] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          />
+        await handleLogin(payload)
+        navigate("/")
 
-          <button
-            type="submit"
-            className="w-full p-3 rounded-lg bg-gradient-to-r from-[#00E19E] to-[#00C6FF] text-black font-semibold hover:opacity-90 transition"
-          >
-            Login
-          </button>
-        </form>
+    }
 
-        <p className="text-sm text-gray-400 text-center mt-6">
-          Don’t have an account?
-          <Link to="/register" className="text-cyan-400 ml-2 hover:underline">
-            Register
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
+    if(!loading && user){
+        return <Navigate to="/" replace />
+    }
+
+    return (
+        <section className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100 sm:px-6 lg:px-8">
+            <div className="mx-auto flex min-h-[85vh] w-full max-w-5xl items-center justify-center">
+                <div className="w-full max-w-md rounded-2xl border border-[#31b8c6]/40 bg-zinc-900/70 p-8 shadow-2xl shadow-black/50 backdrop-blur">
+                    <h1 className="text-3xl font-bold text-[#31b8c6]">
+                        Welcome Back
+                    </h1>
+                    <p className="mt-2 text-sm text-zinc-300">
+                        Sign in with your email and password.
+                    </p>
+
+                    <form onSubmit={submitForm} className="mt-8 space-y-5">
+                        <div>
+                            <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-200">
+                                Email
+                            </label>
+                            <input
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(event) => setEmail(event.target.value)}
+                                placeholder="you@example.com"
+                                required
+                                className="w-full rounded-lg border border-zinc-700 bg-zinc-950/80 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-[#31b8c6] focus:shadow-[0_0_0_3px_rgba(49,184,198,0.25)]"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="password" className="mb-2 block text-sm font-medium text-zinc-200">
+                                Password
+                            </label>
+                            <input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(event) => setPassword(event.target.value)}
+                                placeholder="Enter your password"
+                                required
+                                className="w-full rounded-lg border border-zinc-700 bg-zinc-950/80 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-[#31b8c6] focus:shadow-[0_0_0_3px_rgba(49,184,198,0.25)]"
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="w-full rounded-lg bg-[#31b8c6] px-4 py-3 font-semibold text-zinc-950 transition hover:bg-[#45c7d4] focus:outline-none focus:shadow-[0_0_0_3px_rgba(49,184,198,0.35)]"
+                        >
+                            Login
+                        </button>
+                    </form>
+
+                    <p className="mt-6 text-center text-sm text-zinc-300">
+                        Don&apos;t have an account?{' '}
+                        <Link to="/register" className="font-semibold text-[#31b8c6] transition hover:text-[#45c7d4]">
+                            Register
+                        </Link>
+                    </p>
+                </div>
+            </div>
+        </section>
+    )
 }
+
+export default Login
