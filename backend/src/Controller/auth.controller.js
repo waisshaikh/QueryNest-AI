@@ -1,5 +1,3 @@
-import { syncIndexes } from "mongoose";
-
 import userModel from "../models/user.model.js";
 import Jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
@@ -9,44 +7,65 @@ import { sendEmail } from "../services/mail.service.js";
 // register api
 
 export async function register(req,res) {
-    const { username, email, password } = req.body
+    try {
+        const { username, email, password } = req.body
 
-    const userAlreadyExist = await userModel.findOne({ $or: [{ username }, { email }] });
+        const userAlreadyExist = await userModel.findOne({ $or: [{ username }, { email }] });
 
-    if (userAlreadyExist) {
-        return res.status(400).json({
-            message: "User Already exist",
+        if (userAlreadyExist) {
+            return res.status(400).json({
+                message: "User Already exist",
+                success: false,
+                err: "user Already exist"
+            });
+        }
+
+        const User = await userModel.create({ username, email, password })
+
+        const emailVerificationToken = Jwt.sign({
+            email: User.email,
+        },process.env.JWT_SECRET, { expiresIn: "1d" })
+
+        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+        const verificationUrl = new URL("/api/auth/verify-email", backendUrl);
+        verificationUrl.searchParams.set("token", emailVerificationToken);
+
+        try {
+            await sendEmail({
+                to: email,
+                subject: "Welcome To queryNest",
+                text: `Hi ${username},\n\n Thankyou For Registering at QueryNest-AI We are Exited to have you on! `,
+                html: `<p>Hi ${username} , </p><p> Thankyou for registering at <strong>QueryNext-AI</strong> we are exited you on board!</p> 
+                <p>Please verify your email by clicking the link below:</p>
+                <a href="${verificationUrl.toString()}">Verify Email</a> 
+
+                <p>Best Regards <br> QueryNest Team </br> </p>`
+            });
+        } catch (error) {
+            await userModel.findByIdAndDelete(User._id);
+            return res.status(502).json({
+                message: "Registration failed because the verification email could not be sent",
+                success: false,
+                error: error.message,
+            });
+        }
+
+        res.status(201).json({
+            message:"user Registerd Successfully ",
+            success:true,
+            user:{
+                Id:User._id,
+                username:User.username,
+                email:User.email
+            }
+        })
+    } catch (error) {
+        return res.status(500).json({
+            message: "Registration failed",
             success: false,
-            err: "user Already exist"
+            error: error.message,
         });
     }
-
-    const User = await userModel.create({ username, email, password })
-
-    const emailVeryficationToken = Jwt.sign({
-        email: User.email,
-    },process.env.JWT_SECRET)
-
-    await sendEmail({
-        to: email,
-        subject: "Welcome To queryNest",
-        text: `Hi ${username},\n\n Thankyou For Registering at QueryNest-AI We are Exited to have you on! `,
-        html: `<p>Hi ${username} , </p><p> Thankyou for registering at <strong>QueryNext-AI</strong> we are exited you on board!</p> 
-        <p>Please verify your email by clicking the link below:</p>
-        <a href="http://localhost:3000/api/auth/verify-email?token=${emailVeryficationToken}">Verify Email</a> 
-
-        <p>Best Regards <br> QueryNest Team </br> </p>`
-    })
-
-    res.status(201).json({
-        message:"user Registerd Successfully ",
-        success:true,
-        user:{
-            Id:User._id,
-            username:User.username,
-            email:User.email
-        }
-    })
 };
 
 
