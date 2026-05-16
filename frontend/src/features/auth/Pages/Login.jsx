@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { useAuth } from '../hook/useAuth'
+import { useAuth } from '../../hook/useAuth'
 import { useSelector } from 'react-redux'
 import { Navigate } from 'react-router'
 

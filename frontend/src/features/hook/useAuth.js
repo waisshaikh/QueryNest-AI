@@ -3,18 +3,19 @@ import { register,login,getme } from "../services/auth.api";
 import  {setUser,setError,setLoading,} from "../auth/auth.slice"
 
 
-export function auth (){
-    const Dispatch = useDispatch()
+export function useAuth(){
+    const dispatch = useDispatch()
     
     async function handleRegister({email, username, password}) {
         try{
-            Dispatch(setLoading(true))
+            dispatch(setLoading(true))
             const data = await register ({email, username, password})
+            dispatch(setUser(data.user))
 
         }catch(error) {
-            Dispatch(setError(error.response?.data?.message|| "registration failed"))
+            dispatch(setError(error.response?.data?.message|| "registration failed"))
         }finally{
-            Dispatch(setLoading(false))
+            dispatch(setLoading(false))
         }
         
         
@@ -24,31 +25,31 @@ export function auth (){
     async function handleLogin({email, password}) {
 
         try{
-            Dispatch(setLoading(true))
+            dispatch(setLoading(true))
             const data = await login({email,password})
-            Dispatch(setUser(data.user))
+            dispatch(setUser(data.user))
         }catch(error){
-            Dispatch(setError(error.response?.data?.message||"login failed"))
+            dispatch(setError(error.response?.data?.message||"login failed"))
         }finally{
-            Dispatch(setLoading(false))
+            dispatch(setLoading(false))
         }  
     }
 
     async function handleGetMe () {
         try{
-            Dispatch(setLoading(true))
+            dispatch(setLoading(true))
             const data = await getme()
-            Dispatch(setUser)(data.user)
+            dispatch(setUser(data.user))
         }catch(err){
-            Dispatch(setError(err.response?.data?.message||"failed to fetch user data "))
+            dispatch(setError(err.response?.data?.message||"failed to fetch user data "))
 
         }finally{
-            Dispatch(setLoading(false))
+            dispatch(setLoading(false))
 
         }
         
     } 
-    
+
 
     return{
         handleRegister,
