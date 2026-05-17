@@ -1,13 +1,20 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router'
+import { register as registerUser } from '../../services/auth.api'
 
 const Register = () => {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
-  const submitForm = (event) => {
+  const submitForm = async (event) => {
     event.preventDefault()
+    setLoading(true)
+    setMessage('')
+    setError('')
 
     const payload = {
       username,
@@ -15,7 +22,19 @@ const Register = () => {
       password,
     }
 
-    console.log('Register payload:', payload)
+    try {
+      const data = await registerUser(payload)
+      setMessage(data.message || 'Registration successful. Please check your email to verify your account.')
+      setUsername('')
+      setEmail('')
+      setPassword('')
+    } catch (err) {
+      const responseData = err.response?.data
+      const validationMessage = responseData?.errors?.[0]?.msg
+      setError(validationMessage || responseData?.message || 'Registration failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -71,15 +90,29 @@ const Register = () => {
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Create a password"
                 required
+                minLength={6}
                 className="w-full rounded-lg border border-zinc-700 bg-zinc-950/80 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-[#31b8c6] focus:shadow-[0_0_0_3px_rgba(49,184,198,0.25)]"
               />
             </div>
 
+            {message && (
+              <p className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                {message}
+              </p>
+            )}
+
+            {error && (
+              <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
+              disabled={loading}
               className="w-full rounded-lg bg-[#31b8c6] px-4 py-3 font-semibold text-zinc-950 transition hover:bg-[#45c7d4] focus:outline-none focus:shadow-[0_0_0_3px_rgba(49,184,198,0.35)]"
             >
-              Register
+              {loading ? 'Registering...' : 'Register'}
             </button>
           </form>
 
