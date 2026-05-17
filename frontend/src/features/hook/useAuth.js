@@ -26,10 +26,17 @@ export function useAuth(){
 
         try{
             dispatch(setLoading(true))
+            dispatch(setError(null))
             const data = await login({email,password})
             dispatch(setUser(data.user))
+            return { success: true, data }
         }catch(error){
-            dispatch(setError(error.response?.data?.message||"login failed"))
+            const message =
+                error.response?.data?.message ||
+                error.response?.data?.errors?.[0]?.msg ||
+                "login failed"
+            dispatch(setError(message))
+            return { success: false, message }
         }finally{
             dispatch(setLoading(false))
         }  

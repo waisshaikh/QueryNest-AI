@@ -11,6 +11,7 @@ const Login = () => {
 
     const user = useSelector(state => state.auth.user)
     const loading = useSelector(state => state.auth.loading)
+    const error = useSelector(state => state.auth.error)
 
     const { handleLogin } = useAuth()
 
@@ -24,8 +25,10 @@ const Login = () => {
             password,
         }
 
-        await handleLogin(payload)
-        navigate("/")
+        const result = await handleLogin(payload)
+        if (result.success) {
+            navigate("/")
+        }
 
     }
 
@@ -45,6 +48,12 @@ const Login = () => {
                     </p>
 
                     <form onSubmit={submitForm} className="mt-8 space-y-5">
+                        {error && (
+                            <p className="rounded-lg border border-red-400/40 bg-red-950/40 px-4 py-3 text-sm text-red-100">
+                                {error}
+                            </p>
+                        )}
+
                         <div>
                             <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-200">
                                 Email

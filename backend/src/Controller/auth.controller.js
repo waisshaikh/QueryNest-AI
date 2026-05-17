@@ -76,13 +76,8 @@ export async function login(req, res) {
     try {
         const { email, password } = req.body;
 
-        console.log("LOGIN BODY:", req.body); // debug
-
         const user = await userModel.findOne({ email });
 
-        console.log("USER FOUND:", user); // debug
-
-        // 1. Check user
         if (!user) {
             return res.status(400).json({
                 message: "User not exist",
@@ -90,10 +85,7 @@ export async function login(req, res) {
             });
         }
 
-        // 2. Check password
         const isPasswordCorrect = await user.comparePassword(password);
-
-        console.log("PASSWORD MATCH:", isPasswordCorrect); // debug
 
         if (!isPasswordCorrect) {
             return res.status(400).json({
@@ -101,9 +93,6 @@ export async function login(req, res) {
                 success: false,
             });
         }
-
-        // 3. Check verification
-        console.log("verified:", user.verified);
 
         if (!user.verified) {
             return res.status(400).json({
@@ -122,10 +111,14 @@ export async function login(req, res) {
         return res.cookie("token", token).status(200).json({
             message: "Login Successfully",
             success: true,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+            },
         });
 
     } catch (error) {
-        console.log("LOGIN ERROR:", error);
         return res.status(500).json({
             message: "Server Error",
             error: error.message,
@@ -137,7 +130,7 @@ export async function login(req, res) {
 export async function getme(req,res) {
     const userid = req.user._id
 
-    const user = await userModel.findOne(userid).select("-password")
+    const user = await userModel.findById(userid).select("-password")
 
     if(!user){
         return res.status(404).json({
