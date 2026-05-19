@@ -1,9 +1,18 @@
-const App = () => {
-  return (
-    <>
-      <h1>Hello from wais shaikh</h1>
-    </>
-  );
-};
+import { RouterProvider } from "react-router";
+import { router, Router } from "./App.router";
+import { useAuth } from "../features/hook/useAuth";
+import { useEffect } from "react";
 
-export default App;
+function App(){
+  const Auth = useAuth()
+
+  useEffect(()=>{
+    auth.handleGetMe()
+  }, [])
+
+  return(
+    < RouterProvider router={router}/>
+  )
+}
+
+export default App

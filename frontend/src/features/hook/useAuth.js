@@ -42,7 +42,7 @@ export function useAuth(){
         }  
     }
 
-    async function handleGetMe () {
+    async function handleGetMe() {
         try{
             dispatch(setLoading(true))
             const data = await getme()
