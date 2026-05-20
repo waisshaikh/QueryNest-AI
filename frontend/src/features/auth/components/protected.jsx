@@ -6,9 +6,7 @@ const protected = ({children}) => {
     const loading = useSelector(state=> state.auth.loading)
 
 
-    // wais shaikh
-
-    // wias shank2ens
+   
 
   return (
     <div>protected</div>
