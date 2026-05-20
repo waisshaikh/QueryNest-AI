@@ -13,6 +13,8 @@ if (loading) {
 if (!user){
   return <Navigate to = "/login" replce/>
 }
+
+return children
    
 
   return (
