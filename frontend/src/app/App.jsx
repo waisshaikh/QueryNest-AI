@@ -7,7 +7,7 @@ function App(){
   const Auth = useAuth()
 
   useEffect(()=>{
-    auth.handleGetMe()
+    Auth.handleGetMe()
   }, [])
 
   return(
