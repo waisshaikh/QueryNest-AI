@@ -1,27 +1,16 @@
-import dotenv from "dotenv";
-dotenv.config(); // 👈 MUST be at top
+import dotevn from "dotenv";
+import { config } from "dotenv";
+import naodeMailer from "nodemailer"
 
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-export async function sendEmail({ to, subject, html, text }) {
-  if (!process.env.EMAIL_FROM) {
-    throw new Error("EMAIL_FROM is not configured");
+const transporter = naodeMailer.transporter({
+  service: 'gmail',
+  auth:{
+    user:process.env.GOOGLE_USER,
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret:process.env.GOOGLE_CLIENT_SECRET,
+    refreshToken:process.env.GOOGLE_REFRESH_TOKEN
   }
+})
 
-  const response = await resend.emails.send({
-    from: process.env.EMAIL_FROM,
-    to,
-    subject,
-    html: html || `<p>${text}</p>`,
-  });
 
-  if (response.error) {
-    const message = response.error.message || "Failed to send email";
-    throw new Error(message);
-  }
 
-  console.log("Email sent:", response.data);
-  return response.data;
-}
