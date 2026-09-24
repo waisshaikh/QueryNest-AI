@@ -1,6 +1,6 @@
 import userModel from "../models/user.model.js";
-import Jwt from "jsonwebtoken";
-import { sendEmail } from "../services/mail.service.js";
+import Jwt, { verify } from "jsonwebtoken";
+import {sendEmail} from "../services/mail.service.js"
 
 
 
@@ -146,47 +146,4 @@ export async function getme(req,res) {
     
 }
 
-// email verify
-export async function verifyEmail(req, res) {
-    try {
-        const { token } = req.query;
-
-        if (!token) {
-            return res.status(400).json({
-                message: "Token is missing",
-                success: false,
-            });
-        }
-
-        const decoded = Jwt.verify(token, process.env.JWT_SECRET);
-
-        const user = await userModel.findOne({ email: decoded.email });
-
-        if (!user) {
-            return res.status(400).json({
-                message: "Invalid token",
-                success: false,
-            });
-        }
-
-        user.verified = true;
-        await user.save();
-
-        const html = `
-            <h2>Hi ${user.username},</h2>
-            <p>Your email has been successfully verified! </p>
-            <p>You can now log in to your account.</p>
-            <br/>
-            <p><b>QueryNest Team</b></p>
-        `;
-
-        return res.send(html);
-
-    } catch (error) {
-        return res.status(400).json({
-            message: "Invalid or expired token",
-            success: false,
-            error: error.message,
-        });
-    }
-}             
+// email verification            
