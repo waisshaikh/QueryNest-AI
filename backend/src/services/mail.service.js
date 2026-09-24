@@ -23,7 +23,6 @@ transporter.verify((error) => {
 
 
 //  send email function
-
 const sendEmail = async (to, subject, text, html) => {
   try {
     const info = await transporter.sendMail({

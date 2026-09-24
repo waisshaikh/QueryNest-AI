@@ -34,7 +34,7 @@ export async function register(req,res) {
             await sendEmail({
                 to: email,
                 subject: "Welcome To queryNest",
-                text: `Hi ${username},\n\n Thankyou For Registering at QueryNest-AI We are Exited to have you on! `,
+                // text: `Hi ${username},\n\n Thankyou For Registering at QueryNest-AI We are Exited to have you on! `,
                 html: `<p>Hi ${username} , </p><p> Thankyou for registering at <strong>QueryNext-AI</strong> we are exited you on board!</p> 
                 <p>Please verify your email by clicking the link below:</p>
                 <a href="${verificationUrl.toString()}">Verify Email</a> 
