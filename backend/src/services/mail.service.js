@@ -2,9 +2,10 @@ import dotevn from "dotenv";
 import { config } from "dotenv";
 import nodeMailer from "nodemailer"
 
-const transporter = nodeMailer.transporter({
+const transporter = nodeMailer.createTransport({
   service: 'gmail',
   auth:{
+    type:'OAuth2',
     user:process.env.GOOGLE_USER,
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret:process.env.GOOGLE_CLIENT_SECRET,
@@ -12,9 +13,13 @@ const transporter = nodeMailer.transporter({
   }
 })
 
-transporter.verify()
- .then(()=>{console.log("Email Transporter is ready to send a email")})
- .cacth(()=>{console.log("Email Transporter Varification Failed")})
+transporter.verify((error) => {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log("Server is ready to take our messages");
+  }
+});
 
 
 //  send email function
@@ -36,4 +41,4 @@ const sendEmail = async (to, subject, text, html) => {
   }
 };
 
-module.exports = sendEmail;
+export default sendEmail

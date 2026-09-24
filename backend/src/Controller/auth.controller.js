@@ -1,6 +1,6 @@
 import userModel from "../models/user.model.js";
-import Jwt, { verify } from "jsonwebtoken";
-import {sendEmail} from "../services/mail.service.js"
+import Jwt from "jsonwebtoken";
+import sendEmail from "../services/mail.service.js"
 
 
 
@@ -127,6 +127,7 @@ export async function login(req, res) {
 }
     
 
+//get Me
 export async function getme(req,res) {
     const userid = req.user._id
 
@@ -146,4 +147,6 @@ export async function getme(req,res) {
     
 }
 
-// email verification            
+// email verification       
+
+
