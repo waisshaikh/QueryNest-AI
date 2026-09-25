@@ -49,9 +49,26 @@ const Login = () => {
 
                     <form onSubmit={submitForm} className="mt-8 space-y-5">
                         {error && (
-                            <p className="rounded-lg border border-red-400/40 bg-red-950/40 px-4 py-3 text-sm text-red-100">
-                                {error}
-                            </p>
+                            error.toLowerCase().includes('verify') ? (
+                                // Special box for unverified email
+                                <div className="rounded-lg border border-amber-400/40 bg-amber-950/30 px-4 py-4 text-sm">
+                                    <div className="flex items-start gap-3">
+                                        <span className="text-2xl">📧</span>
+                                        <div>
+                                            <p className="font-semibold text-amber-300 mb-1">Email Not Verified</p>
+                                            <p className="text-amber-200/80">
+                                                Please check your inbox and verify your email before logging in.
+                                                Check your <strong>Spam</strong> or <strong>Promotions</strong> folder if you don't see it.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                // Generic error box
+                                <p className="rounded-lg border border-red-400/40 bg-red-950/40 px-4 py-3 text-sm text-red-100">
+                                    {error}
+                                </p>
+                            )
                         )}
 
                         <div>

@@ -4,6 +4,7 @@ dotenv.config();
 import ConnectToDb from "./src/config/DatabseConnetion.js";
 import { testAi } from "./src/services/ai.service.js";
 
+
 import app from "./src/app.js";
 
 ConnectToDb();
@@ -14,12 +15,11 @@ if (process.env.RUN_AI_STARTUP_TEST === "true") {
     });
 }
 
-
-
-
 app.get("/",(req,res)=>{
     res.send(`server is running on port ${process.env.PORT || 3000}`)
 })
+
+testAi()
 
 const PORT = process.env.PORT || 3000;
 

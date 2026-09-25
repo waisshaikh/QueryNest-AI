@@ -1,15 +1,17 @@
+import dotenv from "dotenv"
+dotenv.config()
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
+
+
+const model = new ChatGoogleGenerativeAI({
+  model: "gemini-3.7-flash",
+  apiKey: process.env.GEMINI_API_KEY
+});
+
 export async function testAi() {
-  if (!process.env.GOOGLE_API_KEY) {
-    throw new Error("GOOGLE_API_KEY is missing from .env");
-  }
+  model.invoke("what is capital of India?").then((response)=>{
+    console.log(response.text)
+  })
 
-  const model = new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash-lite",
-    apiKey: process.env.GOOGLE_API_KEY,
-  });
-
-  const response = await model.invoke("okay, tell me a joke");
-  console.log(response.content);
 }
