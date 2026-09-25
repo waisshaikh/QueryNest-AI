@@ -33,13 +33,55 @@ export async function register(req, res) {
         try {
             await sendEmail({
                 to: email,
-                subject: "Welcome To queryNest",
-                // text: `Hi ${username},\n\n Thankyou For Registering at QueryNest-AI We are Exited to have you on! `,
-                html: `<p>Hi ${username} , </p><p> Thankyou for registering at <strong>QueryNext-AI</strong> we are exited you on board!</p> 
-                <p>Please verify your email by clicking the link below:</p>
-                <a href="${verificationUrl.toString()}">Verify Email</a> 
+                subject: "Verify your email – QueryNest AI",
+                html: `
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+                <body style="margin:0;padding:0;background:#0f0f0f;font-family:'Segoe UI',Arial,sans-serif;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;padding:40px 20px;">
+                    <tr><td align="center">
+                      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#18181b;border-radius:16px;overflow:hidden;border:1px solid #31b8c633;">
+                        
+                        <!-- Header -->
+                        <tr><td style="background:linear-gradient(135deg,#31b8c6,#1e7a84);padding:36px 40px;text-align:center;">
+                          <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">QueryNest AI</h1>
+                          <p style="margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">Verify your email address</p>
+                        </td></tr>
 
-                <p>Best Regards <br> QueryNest Team </br> </p>`
+                        <!-- Body -->
+                        <tr><td style="padding:36px 40px;">
+                          <p style="margin:0 0 8px;color:#a1a1aa;font-size:14px;">Hello,</p>
+                          <h2 style="margin:0 0 16px;color:#f4f4f5;font-size:22px;font-weight:600;">Welcome, ${username}! 👋</h2>
+                          <p style="margin:0 0 24px;color:#a1a1aa;font-size:15px;line-height:1.7;">
+                            Thanks for signing up at <strong style="color:#31b8c6;">QueryNest AI</strong>. 
+                            Please verify your email address to activate your account and get started.
+                          </p>
+
+                          <!-- Verify Button -->
+                          <div style="text-align:center;margin:32px 0;">
+                            <a href="${verificationUrl.toString()}" 
+                               style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,#31b8c6,#1e7a84);color:#ffffff;text-decoration:none;border-radius:10px;font-size:16px;font-weight:700;letter-spacing:0.3px;box-shadow:0 4px 20px rgba(49,184,198,0.4);">
+                              ✉ Verify Email
+                            </a>
+                          </div>
+
+                          <p style="margin:24px 0 0;color:#71717a;font-size:13px;line-height:1.6;">
+                            This link expires in <strong style="color:#a1a1aa;">24 hours</strong>. If you didn't create an account, you can safely ignore this email.
+                          </p>
+                        </td></tr>
+
+                        <!-- Footer -->
+                        <tr><td style="padding:20px 40px;border-top:1px solid #27272a;text-align:center;">
+                          <p style="margin:0;color:#52525b;font-size:12px;">© 2026 QueryNest AI · All rights reserved</p>
+                        </td></tr>
+
+                      </table>
+                    </td></tr>
+                  </table>
+                </body>
+                </html>
+                `
             });
         } catch (error) {
             await userModel.findByIdAndDelete(User._id);

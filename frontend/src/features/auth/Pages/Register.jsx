@@ -24,7 +24,7 @@ const Register = () => {
 
     try {
       const data = await registerUser(payload)
-      setMessage(data.message || 'Registration successful. Please check your email to verify your account.')
+      setMessage(`Registration successful! Please check ${email} and verify your account before logging in.`)
       setUsername('')
       setEmail('')
       setPassword('')
