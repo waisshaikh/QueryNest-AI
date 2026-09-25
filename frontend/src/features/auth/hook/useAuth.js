@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
 import { register,login,getme } from "../services/auth.api";
-import  {setUser,setError,setLoading,} from "../auth/auth.slice"
+import  {setUser,setError,setLoading,} from "../auth.slice"
 
 
 export function useAuth(){

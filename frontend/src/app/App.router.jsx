@@ -1,9 +1,9 @@
 import { createBrowserRouter, Outlet } from "react-router";
-import Login from "../features/auth/pages/Login";
-import Register from "../features/auth/pages/Register";
-import Dashboard from "../features/services/chat/pages/Dashboard";
+import Login from "../features/auth/Pages/Login";
+import Register from "../features/auth/Pages/Register";
+import Dashboard from "../features/chat/pages/Dashboard";
 import Protected  from "../features/auth/components/protected.jsx"
-import { useAuth } from "../features/hook/useAuth";
+import { useAuth } from "../features/auth/hook/useAuth";
 import { useEffect } from "react";
 
 function RootLayout() {
