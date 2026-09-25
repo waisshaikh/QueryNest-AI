@@ -6,7 +6,7 @@ import sendEmail from "../services/mail.service.js"
 
 // register api
 
-export async function register(req,res) {
+export async function register(req, res) {
     try {
         const { username, email, password } = req.body
 
@@ -24,7 +24,7 @@ export async function register(req,res) {
 
         const emailVerificationToken = Jwt.sign({
             email: User.email,
-        },process.env.JWT_SECRET, { expiresIn: "1d" })
+        }, process.env.JWT_SECRET, { expiresIn: "1d" })
 
         const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
         const verificationUrl = new URL("/api/auth/verify-email", backendUrl);
@@ -51,12 +51,12 @@ export async function register(req,res) {
         }
 
         res.status(201).json({
-            message:"user Registerd Successfully ",
-            success:true,
-            user:{
-                Id:User._id,
-                username:User.username,
-                email:User.email
+            message: "user Registerd Successfully ",
+            success: true,
+            user: {
+                Id: User._id,
+                username: User.username,
+                email: User.email
             }
         })
     } catch (error) {
@@ -125,28 +125,78 @@ export async function login(req, res) {
         });
     }
 }
-    
+
 
 //get Me
-export async function getme(req,res) {
+export async function getme(req, res) {
     const userid = req.user._id
 
     const user = await userModel.findById(userid).select("-password")
 
-    if(!user){
+    if (!user) {
         return res.status(404).json({
-            message:"User Not Found",
-            success:false,
+            message: "User Not Found",
+            success: false,
         })
     }
     return res.status(200).json({
-        message:"User Found",
-        success:true,
+        message: "User Found",
+        success: true,
         user
     })
-    
+
 }
 
-// email verification       
+// email verification    
+
+export async function verifyEmail(req, res) {
+    try {
+        const { token } = req.query;
+
+        const decode = Jwt.verify(token, process.env.JWT_SECRET);
+
+        const user = await userModel.findOne({ email: decode.email });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid Token",
+                success: false,
+                err: "User Not Found"
+            });
+        }
+
+    user.verified = true;
+        await user.save();
+
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head><title>Email Verified - QueryNest AI</title></head>
+        <body style="font-family: sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;">
+            <div style="background: white; padding: 40px; border-radius: 12px; text-align: center; max-width: 420px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                <div style="font-size: 60px; margin-bottom: 10px;">✅</div>
+                <h2 style="color: #2d2d2d; margin-bottom: 8px;">Email Verified Successfully!</h2>
+                <p style="color: #555;">Hi <strong>${user.username}</strong>,</p>
+                <p style="color: #555;">Your email has been verified. You can now login and use all features of <strong>QueryNest-AI</strong>.</p>
+                <a href="http://localhost:5173/login" 
+                   style="display: inline-block; margin-top: 20px; padding: 12px 32px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                   Go to Login
+                </a>
+                <p style="color: #aaa; font-size: 12px; margin-top: 24px;">QueryNest Team</p>
+            </div>
+        </body>
+        </html>
+        `;
+
+        return res.status(200).send(html);
+
+    } catch (error) {
+        return res.status(400).json({
+            message: "Invalid or expired token",
+            success: false,
+            error: error.message,
+        });
+    }
+}
 
 
