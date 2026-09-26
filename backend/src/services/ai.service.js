@@ -1,17 +1,21 @@
 import dotenv from "dotenv"
 dotenv.config()
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { HumanMessage } from "@langchain/core/messages";
 
 
 
 const model = new ChatGoogleGenerativeAI({
-  model: "gemini-3.6-flash",
+  model: "gemini-3.5-flash",
   apiKey: process.env.GEMINI_API_KEY
 });
 
-export async function testAi() {
-  model.invoke("what is thermo dynamics explain under 100 words?").then((response)=>{
-    console.log(response.text)
-  })
+export async function generateResponse(message) {
+  
+  const response = await model.invoke([
+    new HumanMessage(message)
+  ]);
+
+  return response.text
 
 }
