@@ -10,12 +10,19 @@ export async function sendMessage (req,res){
     const {message} = req.body  
 
     const tittle = await generateChatTittle(message);
+    console.log(tittle)
 
     const result  = await generateResponse(message);
 
     const chat = await chatModel.create({
         user: req.user._id,
         tittle
+    })
+
+    const userMessage = await messageModel.create({
+        chat:chat.id,
+        content:result,
+        role:"user"
     })
    
     const aiMessage = await messageModel.create({
@@ -27,9 +34,7 @@ export async function sendMessage (req,res){
    res.status(201).json({
      tittle,
     chat,
-    aiMessage,
-    aiMessage:result
-   
+    aiMessage
 })
 
 }

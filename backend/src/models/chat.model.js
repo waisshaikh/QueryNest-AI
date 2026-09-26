@@ -7,7 +7,7 @@ const chatSchema = new mongoose.Schema(
             ref: 'User',
             required: true,
         },
-        title: {
+        tittle: {
             type: String,
             default: 'New Chat',
             trim: true,
