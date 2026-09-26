@@ -7,27 +7,35 @@ import { AIMessageChunk } from "@langchain/core/messages";
 
 export async function sendMessage (req,res){
 
-    const {message} = req.body  
+    const {message,chat:chatId} = req.body  
 
-    const tittle = await generateChatTittle(message);
-    console.log(tittle)
+    let tittle = null , chat = null
 
-    const result  = await generateResponse(message);
+    if(!chatId){
+     tittle = await generateChatTittle(message);
 
-    const chat = await chatModel.create({
+     chat = await chatModel.create({
         user: req.user._id,
         tittle
-    })
+    });
+        
+    }
+
+    const activeChatId = chatId || chat._id;
 
     const userMessage = await messageModel.create({
-        chat:chat.id,
-        content:result,
+        chat: activeChatId,
+        content: message,
         role:"user"
     })
    
+    const messages = await messageModel.find({chat: activeChatId})
+
+    const result  = await generateResponse(messages);
+   
     const aiMessage = await messageModel.create({
-        chat: chat.id,
-        content:result,
+        chat: activeChatId,
+        content: result,
         role:"ai"
     })
 
