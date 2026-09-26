@@ -11,6 +11,7 @@ function RootLayout() {
 
     useEffect(() => {
         handleGetMe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return <Outlet />;
