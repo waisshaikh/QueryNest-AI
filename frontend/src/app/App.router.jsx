@@ -5,6 +5,7 @@ import Dashboard from "../features/chat/pages/Dashboard";
 import Protected  from "../features/auth/components/protected.jsx"
 import { useAuth } from "../features/auth/hook/useAuth";
 import { useEffect } from "react";
+import { Navigate } from "react-router";
 
 function RootLayout() {
     const { handleGetMe } = useAuth();
@@ -35,6 +36,11 @@ export const router = createBrowserRouter([
                     <Dashboard />
                 </Protected>
             },
+
+            {
+                path:"/dashboard",
+                element:<Navigate to ="/" replace/>
+            }
         ]
     }
 ])
