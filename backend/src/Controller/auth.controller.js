@@ -189,6 +189,23 @@ export async function getme(req, res) {
 
 }
 
+// Logout Api
+export async function logout(req, res) {
+    try {
+        res.clearCookie("token");
+        return res.status(200).json({
+            message: "Logged out successfully",
+            success: true
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Logout failed",
+            success: false,
+            error: error.message
+        });
+    }
+}
+
 // email verification    
 
 export async function verifyEmail(req, res) {

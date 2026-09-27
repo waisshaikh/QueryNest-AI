@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useSelector } from 'react-redux';
+import { useAuth } from '../../auth/hook/useAuth';
 import { useChat } from '../hooks/useChat';
 import {
   Plus,
@@ -12,10 +14,15 @@ import {
   RotateCcw,
   ThumbsUp,
   ThumbsDown,
-  Trash2
+  Trash2,
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
 
 const Dashboard = () => {
+  const user = useSelector(state => state.auth.user);
+  const { handleLogout } = useAuth();
+
   const {
     initializeSocketConnection,
     handleSendMessage,
@@ -200,6 +207,51 @@ const Dashboard = () => {
             })
           )}
         </div>
+
+        {/* ========================================================================= */}
+        {/* USER PROFILE CARD & LOGOUT SECTION (Bottom of Sidebar)                   */}
+        {/* ========================================================================= */}
+        <div className="pt-3 border-t border-white/20 mt-auto shrink-0">
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/25 shadow-lg space-y-2.5">
+            
+            {/* Avatar & User Details */}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-white/25 border border-white/40 flex items-center justify-center font-black text-white text-sm shadow-sm shrink-0 uppercase">
+                {user?.username ? user.username.charAt(0) : <UserIcon className="w-5 h-5 text-white" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm font-extrabold text-white truncate leading-tight">
+                  {user?.username || 'User Account'}
+                </h4>
+                <p className="text-[11px] text-orange-100/90 truncate font-medium">
+                  {user?.email || 'No email attached'}
+                </p>
+              </div>
+            </div>
+
+            {/* User ID Box */}
+            <div className="flex items-center justify-between bg-black/15 px-2.5 py-1.5 rounded-xl border border-white/10 text-[11px] font-mono">
+              <span className="text-[10px] text-orange-200/80 uppercase font-semibold">ID:</span>
+              <span className="truncate max-w-[170px] font-bold text-white select-all">
+                {user?._id || user?.id || 'N/A'}
+              </span>
+            </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={async () => {
+                await handleLogout();
+              }}
+              className="w-full flex items-center justify-center space-x-2 bg-white/20 hover:bg-rose-600 hover:border-rose-400 text-white border border-white/30 rounded-xl py-2 px-3 text-xs font-bold transition-all duration-200 shadow-md cursor-pointer hover:scale-[1.01] active:scale-95"
+              title="Logout from account"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+
+          </div>
+        </div>
+
       </section>
 
       {/* ========================================================================= */}

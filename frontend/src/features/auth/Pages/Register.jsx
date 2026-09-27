@@ -1,131 +1,187 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router'
-import { register as registerUser } from '../services/auth.api'
+import React, { useState } from 'react';
+import { Link } from 'react-router';
+import { register as registerUser } from '../services/auth.api';
+import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const Register = () => {
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [localWarning, setLocalWarning] = useState('');
 
   const submitForm = async (event) => {
-    event.preventDefault()
-    setLoading(true)
-    setMessage('')
-    setError('')
+    event.preventDefault();
+    setLocalWarning('');
+    setMessage('');
+    setError('');
+
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      setLocalWarning('Please fill in all required fields.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setLocalWarning('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setLoading(true);
 
     const payload = {
-      username,
-      email,
+      username: username.trim(),
+      email: email.trim(),
       password,
-    }
+    };
 
     try {
-      const data = await registerUser(payload)
-      setMessage(`Registration successful! Please check ${email} and verify your account before logging in.`)
-      setUsername('')
-      setEmail('')
-      setPassword('')
+      await registerUser(payload);
+      setMessage(`Registration successful! Please check ${email} and verify your account before logging in.`);
+      setUsername('');
+      setEmail('');
+      setPassword('');
     } catch (err) {
-      const responseData = err.response?.data
-      const validationMessage = responseData?.errors?.[0]?.msg
-      setError(validationMessage || responseData?.message || 'Registration failed. Please try again.')
+      const responseData = err.response?.data;
+      const validationMessage = responseData?.errors?.[0]?.msg;
+      setError(validationMessage || responseData?.message || 'Registration failed. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <section className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[85vh] w-full max-w-5xl items-center justify-center">
-        <div className="w-full max-w-md rounded-2xl border border-[#31b8c6]/40 bg-zinc-900/70 p-8 shadow-2xl shadow-black/50 backdrop-blur">
-          <h1 className="text-3xl font-bold text-[#31b8c6]">
-            Create Account
-          </h1>
-          <p className="mt-2 text-sm text-zinc-300">
-            Register with your username, email, and password.
-          </p>
+    <section className="min-h-screen bg-[#f8f6f2] px-4 py-10 text-slate-900 sm:px-6 lg:px-8 flex items-center justify-center font-sans">
+      <div className="mx-auto flex w-full max-w-md items-center justify-center">
+        <div className="w-full rounded-2xl border-2 border-orange-500 bg-white p-8 shadow-2xl shadow-orange-950/10">
+          
+          {/* Header with QueryNest AI Logo */}
+          <div className="flex flex-col items-center text-center space-y-2">
+            <img
+              src="/QuerynestAI-logo.png"
+              alt="QueryNest AI Logo"
+              className="w-14 h-14 object-contain drop-shadow"
+            />
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+              Create Account
+            </h1>
+            <p className="text-sm font-medium text-slate-600">
+              Join QueryNest AI to get started
+            </p>
+          </div>
 
-          <form onSubmit={submitForm} className="mt-8 space-y-5">
+          <form onSubmit={submitForm} noValidate className="mt-8 space-y-5">
+            
+            {/* Local Empty/Short Password Validation Warning */}
+            {localWarning && (
+              <div className="flex items-center space-x-2 rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-sm font-semibold text-amber-800">
+                <AlertCircle className="w-5 h-5 shrink-0 text-amber-600" />
+                <span>{localWarning}</span>
+              </div>
+            )}
+
+            {/* Registration Success Alert */}
+            {message && (
+              <div className="flex items-start space-x-3 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 mt-0.5" />
+                <span className="leading-relaxed">{message}</span>
+              </div>
+            )}
+
+            {/* Backend Registration Error Alert */}
+            {error && !localWarning && (
+              <div className="flex items-center space-x-2 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-sm font-semibold text-rose-700">
+                <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Username Input */}
             <div>
-              <label htmlFor="username" className="mb-2 block text-sm font-medium text-zinc-200">
+              <label htmlFor="username" className="mb-1.5 block text-xs font-bold text-slate-800 uppercase tracking-wider">
                 Username
               </label>
               <input
                 id="username"
                 type="text"
                 value={username}
-                onChange={(event) => setUsername(event.target.value)}
+                onChange={(event) => {
+                  setUsername(event.target.value);
+                  if (localWarning) setLocalWarning('');
+                }}
                 placeholder="Choose a username"
-                required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950/80 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-[#31b8c6] focus:shadow-[0_0_0_3px_rgba(49,184,198,0.25)]"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder-slate-400 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
               />
             </div>
 
+            {/* Email Input */}
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-200">
-                Email
+              <label htmlFor="email" className="mb-1.5 block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Email Address
               </label>
               <input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  if (localWarning) setLocalWarning('');
+                }}
                 placeholder="you@example.com"
-                required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950/80 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-[#31b8c6] focus:shadow-[0_0_0_3px_rgba(49,184,198,0.25)]"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder-slate-400 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
               />
             </div>
 
+            {/* Password Input with Show/Hide Toggle */}
             <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-medium text-zinc-200">
+              <label htmlFor="password" className="mb-1.5 block text-xs font-bold text-slate-800 uppercase tracking-wider">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Create a password"
-                required
-                minLength={6}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950/80 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-[#31b8c6] focus:shadow-[0_0_0_3px_rgba(49,184,198,0.25)]"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    if (localWarning) setLocalWarning('');
+                  }}
+                  placeholder="Create a strong password"
+                  className="w-full rounded-xl border border-slate-300 bg-white pl-4 pr-12 py-3 text-slate-900 font-medium placeholder-slate-400 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
-            {message && (
-              <p className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-                {message}
-              </p>
-            )}
-
-            {error && (
-              <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                {error}
-              </p>
-            )}
-
+            {/* Submit Register Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-[#31b8c6] px-4 py-3 font-semibold text-zinc-950 transition hover:bg-[#45c7d4] focus:outline-none focus:shadow-[0_0_0_3px_rgba(49,184,198,0.35)]"
+              className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 px-4 py-3.5 font-bold text-white shadow-lg shadow-orange-500/30 transition hover:from-orange-600 hover:to-amber-700 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
             >
-              {loading ? 'Registering...' : 'Register'}
+              {loading ? 'Registering...' : 'Create Account'}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-zinc-300">
+          <p className="mt-6 text-center text-sm font-medium text-slate-600">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-[#31b8c6] transition hover:text-[#45c7d4]">
-              Login
+            <Link to="/login" className="font-bold text-orange-600 hover:text-orange-700 hover:underline">
+              Log In
             </Link>
           </p>
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Register
+export default Register;

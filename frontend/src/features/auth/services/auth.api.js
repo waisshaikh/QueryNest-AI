@@ -19,7 +19,11 @@ export async function login({ email, password }) {
 export async function getme() {
    const response = await api.get('/auth/get-me');
     return response.data;        
-    
+}
+
+export async function logout() {
+   const response = await api.get('/auth/logout');
+    return response.data;        
 }
 
 
