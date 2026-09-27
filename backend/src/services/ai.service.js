@@ -1,20 +1,22 @@
 import dotenv from "dotenv"
 dotenv.config()
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatGoogleGenerativeAI   } from "@langchain/google-genai";
+import { ChatGroq } from "@langchain/groq";
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
 
 
-
-import dotenv from "dotenv";
-dotenv.config();
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-
-const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const modelName = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 const geminiModel = new ChatGoogleGenerativeAI({
   model: modelName,
   apiKey: process.env.GEMINI_API_KEY,
+  maxRetries: 2,
+});
+
+const groqModel = new ChatGroq({
+  model: "qwen/qwen3.8-27b",
+  apiKey: process.env.GROQ_API_KEY,
+  temperature: 0.3,
   maxRetries: 2,
 });
 
@@ -35,7 +37,6 @@ export async function generateResponse(messages) {
     return response.text;
   } catch (error) {
     console.error("Gemini AI Primary Model Error:", error.message);
-    // Fallback to gemini-1.5-flash if primary model fails
     try {
       const fallbackModel = new ChatGoogleGenerativeAI({
         model: "gemini-1.5-flash",
@@ -60,16 +61,45 @@ export async function generateResponse(messages) {
 
 export async function generateChatTittle(message) {
   try {
-    const response = await geminiModel.invoke([
-      new SystemMessage(`You are a helpful assistant that generates a concise and interesting title for a chat conversation in 2 to 5 words. Do not use quotes or punctuation.`),
-      new HumanMessage(`First message: "${message}"`),
+    const response = await groqModel.invoke([
+      new SystemMessage(
+        ` you are a helpfull assistant that generate concise and intresting title
+      for any chat in less than 5 words.
+
+      user will provide you the first message of a chat conversation,
+      and you will  generate a tittle that capture the essence of convarsaton in 2 to 5 words.
+      the tittle should be clear, relavent, and engaging, giving users a quick understanding of what the chat is about
+      
+    `
+      ),
+
+      new HumanMessage(
+        `First message: "${message}"`
+      ),
     ]);
-    return response.text.trim().replace(/^["']|["']$/g, '');
+
+    return response.content
+      .toString()
+      .trim()
+      .replace(/^["']|["']$/g, "");
+
   } catch (error) {
-    console.warn("Failed to generate chat title with AI, using fallback title:", error.message);
-    // Safe fallback title from first few words of user message
-    const words = message.trim().split(/\s+/).slice(0, 4).join(" ");
-    return words ? (words.length > 30 ? words.slice(0, 30) + "..." : words) : "New Conversation";
+    console.warn(
+      "Failed to generate chat title with Groq, using fallback title:",
+      error.message
+    );
+
+    const words = message
+      .trim()
+      .split(/\s+/)
+      .slice(0, 4)
+      .join(" ");
+
+    return words
+      ? words.length > 30
+        ? words.slice(0, 30) + "..."
+        : words
+      : "New Conversation";
   }
 }
 

@@ -5,7 +5,6 @@ import { useChat } from '../hooks/useChat';
 import {
   Plus,
   Search,
-  MessageSquare,
   Sparkles,
   Send,
   Copy,

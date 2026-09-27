@@ -17,7 +17,8 @@ export async function sendMessage (req,res){
             tittle = await generateChatTittle(message);
             newChatObj = await chatModel.create({
                 user: req.user._id || req.user.id,
-                tittle
+                tittle,
+                title: tittle
             });
         }
 
