@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useChat } from '../hooks/useChat';
 import {
   Plus,
@@ -11,9 +13,7 @@ import {
   RotateCcw,
   ThumbsUp,
   ThumbsDown,
-  Flame,
-  Trash2,
-  Bot
+  Trash2
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -108,12 +108,14 @@ const Dashboard = () => {
       {/* ========================================================================= */}
       <section className="w-72 md:w-80 bg-gradient-to-b from-[#ff5100] via-[#f95700] to-[#e64a00] border-r border-orange-600/40 flex flex-col p-5 space-y-4 shrink-0 text-white shadow-2xl">
         
-        {/* Header Title: QueryNest AI */}
+        {/* Header Title: QueryNest AI with updated logo */}
         <div className="flex items-center justify-between pb-3 border-b border-white/20">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-md">
-              <Flame className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src="/QuerynestAI-logo.png"
+              alt="QueryNest AI Logo"
+              className="w-10 h-10 object-contain shrink-0"
+            />
             <div>
               <h2 className="text-base font-extrabold text-white tracking-wide">
                 QueryNest AI
@@ -167,7 +169,6 @@ const Dashboard = () => {
                   }`}
                 >
                   <div className="flex items-center space-x-3 overflow-hidden flex-1 min-w-0">
-                    <MessageSquare className={`w-4 h-4 shrink-0 ${isActive ? 'text-orange-600' : 'text-orange-500 group-hover:text-orange-600'}`} />
                     <div className="truncate flex-1 min-w-0">
                       <h3 className="text-sm font-bold text-slate-900 truncate">
                         {item.title || 'New Chat'}
@@ -210,8 +211,12 @@ const Dashboard = () => {
         {/* Top Header Bar */}
         <header className="h-16 border-b border-orange-200/60 px-6 flex items-center justify-between bg-white/80 backdrop-blur-md z-10">
           <div className="flex items-center space-x-3">
-            <h1 className="text-sm font-bold text-slate-900 tracking-wide flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-orange-500" />
+            <img
+              src="/QuerynestAI-logo.png"
+              alt="QueryNest AI Logo"
+              className="w-7 h-7 object-contain shrink-0"
+            />
+            <h1 className="text-sm font-bold text-slate-900 tracking-wide">
               {activeChat ? activeChat.title : 'QueryNest AI'}
             </h1>
           </div>
@@ -234,9 +239,11 @@ const Dashboard = () => {
           
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 my-auto">
-              <div className="p-4 rounded-3xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-xl shadow-orange-500/20">
-                <Flame className="w-10 h-10 animate-bounce" />
-              </div>
+              <img
+                src="/QuerynestAI-logo.png"
+                alt="QueryNest AI Logo"
+                className="w-20 h-20 object-contain shrink-0 drop-shadow-md"
+              />
               <div className="space-y-1">
                 <h2 className="text-xl font-extrabold text-slate-900">How can QueryNest AI help you today?</h2>
                 <p className="text-xs text-slate-500 max-w-md">
@@ -283,7 +290,7 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                {/* AI MESSAGE CARD (White BG, Black / Dark Text) */}
+                {/* AI MESSAGE CARD (White BG, ReactMarkdown Markdown Rendered) */}
                 {msg.role === 'ai' && (
                   <div className="w-full flex justify-center my-4">
                     <div className="w-full bg-white border border-orange-200/80 rounded-2xl p-6 shadow-md shadow-orange-950/5 space-y-4 hover:border-orange-300 transition-all">
@@ -291,9 +298,11 @@ const Dashboard = () => {
                       {/* Header Badge */}
                       <div className="flex items-center justify-between border-b border-orange-100 pb-3">
                         <div className="flex items-center space-x-3">
-                          <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-600/30">
-                            <Bot className="w-5 h-5" />
-                          </div>
+                          <img
+                            src="/QuerynestAI-logo.png"
+                            alt="QueryNest AI Logo"
+                            className="w-8 h-8 object-contain shrink-0"
+                          />
                           <div>
                             <h3 className="text-sm font-bold text-slate-900 tracking-tight">
                               QueryNest AI
@@ -304,9 +313,11 @@ const Dashboard = () => {
                         <span className="text-xs text-slate-400 font-mono">{formatTime(msg.createdAt)}</span>
                       </div>
 
-                      {/* AI Main Text (Black / Dark Text) */}
-                      <div className="space-y-3 text-slate-800 text-sm leading-relaxed font-sans">
-                        <p className="font-normal whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      {/* AI Main Text Rendered with ReactMarkdown */}
+                      <div className="prose prose-slate max-w-none text-slate-800 text-sm leading-relaxed font-sans prose-headings:font-bold prose-headings:text-slate-900 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:p-4 prose-pre:rounded-xl prose-code:bg-orange-50 prose-code:text-orange-700 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:text-xs prose-code:before:content-none prose-code:after:content-none font-normal">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content}
+                        </ReactMarkdown>
                       </div>
 
                       {/* AI Message Action Bar */}
