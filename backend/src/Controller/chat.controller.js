@@ -1,5 +1,5 @@
 import { response } from "express"
-import { generateResponse, generateChatTittle } from "../services/ai.service.js"
+import { generateResponse, generateChatTitle } from "../services/ai.service.js"
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js"
 import { AIMessageChunk } from "@langchain/core/messages";
@@ -10,15 +10,14 @@ export async function sendMessage (req,res){
         const { message, chat, chatId: reqChatId } = req.body;
         const activeChatIdInput = chat || reqChatId;
 
-        let tittle = null;
+        let title = null;
         let newChatObj = null;
 
         if(!activeChatIdInput){
-            tittle = await generateChatTittle(message);
+            title = await generateChatTitle(message);
             newChatObj = await chatModel.create({
                 user: req.user._id || req.user.id,
-                tittle,
-                title: tittle
+                title
             });
         }
 
@@ -41,7 +40,7 @@ export async function sendMessage (req,res){
         });
 
         res.status(201).json({
-            tittle,
+            title,
             chat: newChatObj,
             userMessage,
             aiMessage
