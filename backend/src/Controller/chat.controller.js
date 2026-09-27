@@ -6,102 +6,123 @@ import { AIMessageChunk } from "@langchain/core/messages";
 
 
 export async function sendMessage (req,res){
+    try {
+        const { message, chat, chatId: reqChatId } = req.body;
+        const activeChatIdInput = chat || reqChatId;
 
-    const {message,chat:chatId} = req.body  
+        let tittle = null;
+        let newChatObj = null;
 
-    let tittle = null , chat = null
+        if(!activeChatIdInput){
+            tittle = await generateChatTittle(message);
+            newChatObj = await chatModel.create({
+                user: req.user._id || req.user.id,
+                tittle
+            });
+        }
 
-    if(!chatId){
-     tittle = await generateChatTittle(message);
+        const activeChatId = activeChatIdInput || newChatObj._id;
 
-     chat = await chatModel.create({
-        user: req.user._id,
-        tittle
-    });
-        
+        const userMessage = await messageModel.create({
+            chat: activeChatId,
+            content: message,
+            role: "user"
+        });
+       
+        const messages = await messageModel.find({ chat: activeChatId }).sort({ createdAt: 1 });
+
+        const result = await generateResponse(messages);
+       
+        const aiMessage = await messageModel.create({
+            chat: activeChatId,
+            content: result,
+            role: "ai"
+        });
+
+        res.status(201).json({
+            tittle,
+            chat: newChatObj,
+            userMessage,
+            aiMessage
+        });
+    } catch (error) {
+        console.error("Error in sendMessage controller:", error);
+        res.status(500).json({ message: "Failed to send message", error: error.message });
     }
-
-    const activeChatId = chatId || chat._id;
-
-    const userMessage = await messageModel.create({
-        chat: activeChatId,
-        content: message,
-        role:"user"
-    })
-   
-    const messages = await messageModel.find({chat: activeChatId})
-
-    const result  = await generateResponse(messages);
-   
-    const aiMessage = await messageModel.create({
-        chat: activeChatId,
-        content: result,
-        role:"ai"
-    })
-
-   res.status(201).json({
-     tittle,
-    chat,
-    aiMessage
-})
-
 }
 
 export async function getChats(req,res) {
-    const user = req.user
-    const chats = await chatModel.find({user:user.id})
+    try {
+        const userId = req.user._id || req.user.id;
+        const chats = await chatModel.find({ user: userId }).sort({ updatedAt: -1 });
 
-    res.status(200).json({
-        message:"Chat recive successfully",
-        chats  
-    });
-   
+        res.status(200).json({
+            message: "Chats retrieved successfully",
+            chats  
+        });
+    } catch (error) {
+        console.error("Error in getChats controller:", error);
+        res.status(500).json({ message: "Failed to fetch chats", error: error.message });
+    }
 }
 
 export async function getMessages(req,res){
-    const {chatId} = req.params
+    try {
+        const { chatId } = req.params;
+        const userId = req.user._id || req.user.id;
 
-    const chat = await chatModel.findOne({
-        _id:chatId,
-        user:req.user.id
-    })
+        const chat = await chatModel.findOne({
+            _id: chatId,
+            user: userId
+        });
 
-    if(!chat){
-        return res.status(404).json({
-            message:"chat not found"
-        })
+        if(!chat){
+            return res.status(404).json({
+                message: "Chat not found"
+            });
+        }
+
+        const messages = await messageModel.find({
+            chat: chatId
+        }).sort({ createdAt: 1 });
+
+        res.status(200).json({
+            message: "Messages retrieved successfully",
+            messages
+        });
+    } catch (error) {
+        console.error("Error in getMessages controller:", error);
+        res.status(500).json({ message: "Failed to fetch messages", error: error.message });
     }
-
-    const messages= await messageModel.find({
-        chat:chatId
-    })
-    res.status(200).json({
-        message:"messages retrived successfully",
-        messages
-    })
 }
 
 export async function deleteChat(req,res) {
-    const {chatId}= req.params;
-    const chat = await chatModel.findOneAndDelete({
-        _id:chatId,
-        user:req.user.id
-    })
+    try {
+        const { chatId } = req.params;
+        const userId = req.user._id || req.user.id;
 
-     await messageModel.deleteMany({
-        chat:chatId
-    })
+        const chat = await chatModel.findOneAndDelete({
+            _id: chatId,
+            user: userId
+        });
 
-    if(!chat){
-        return res.status(400).json({
-            message:"chat Not Found"
-        })
+        await messageModel.deleteMany({
+            chat: chatId
+        });
+
+        if(!chat){
+            return res.status(404).json({
+                message: "Chat not found"
+            });
+        }
+       
+        res.status(200).json({
+            message: "Chat deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error in deleteChat controller:", error);
+        res.status(500).json({ message: "Failed to delete chat", error: error.message });
     }
-   
-    res.status(200).json({
-        message:"chat Deleted Successfully"
-    })
-
-    
 }
+
 

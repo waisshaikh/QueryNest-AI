@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
 import { useChat } from '../hooks/useChat';
 import {
   Plus,
@@ -18,36 +17,35 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
-  const chat = useChat();
-  const { user } = useSelector((state) => state.auth || {});
+  const {
+    initializeSocketConnection,
+    handleSendMessage,
+    handleGetChats,
+    handleOpenChat,
+    handleDeleteChat,
+    handleNewChat,
+    chats,
+    currentChatId,
+    isLoading
+  } = useChat();
 
-  // Socket initialization
+  // Socket initialization & Initial chat history fetch
   useEffect(() => {
-    const cleanup = chat.initializeSocketConnection();
+    const cleanup = initializeSocketConnection();
+    handleGetChats();
     return cleanup;
   }, []);
 
   // UI State
-  const [selectedChatId, setSelectedChatId] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [inputMessage, setInputMessage] = useState('');
   const [copiedIndex, setCopiedIndex] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const messagesEndRef = useRef(null);
 
-  // Chat Titles in the left drawer
-  const [chatHistory, setChatHistory] = useState([
-    { id: 1, title: 'Chat title 1', subtitle: 'Recent conversation', time: '2m ago' },
-    { id: 2, title: 'Chat title 2', subtitle: 'Recent conversation', time: '1h ago' },
-    { id: 3, title: 'Chat title 3', subtitle: 'Recent conversation', time: '3h ago' },
-    { id: 4, title: 'Chat title 4', subtitle: 'Recent conversation', time: '1d ago' },
-    { id: 5, title: 'Chat title 5', subtitle: 'Recent conversation', time: '2d ago' },
-    { id: 6, title: 'Chat title 6', subtitle: 'Recent conversation', time: '3d ago' },
-  ]);
-
-  // Clean initial messages
-  const [messages, setMessages] = useState([]);
+  // Active chat & messages from Redux store via useChat
+  const activeChat = currentChatId && chats ? chats[currentChatId] : null;
+  const messages = activeChat?.messages || [];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,64 +53,15 @@ const Dashboard = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  const handleSendMessage = (e) => {
+  const onSubmit = async (e) => {
     e?.preventDefault();
-    if (!inputMessage.trim() || isSubmitting) return;
+    if (!inputMessage.trim() || isLoading) return;
 
-    const newUserMsg = {
-      id: Date.now(),
-      sender: 'user',
-      text: inputMessage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages((prev) => [...prev, newUserMsg]);
-    const currentInput = inputMessage;
+    const messageToSend = inputMessage;
     setInputMessage('');
-    setIsSubmitting(true);
-
-    // Simulate QueryNest AI response
-    setTimeout(() => {
-      const newAiMsg = {
-        id: Date.now() + 1,
-        sender: 'ai',
-        text: `Here is the response for "${currentInput}". QueryNest AI has processed your request.`,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, newAiMsg]);
-      setIsSubmitting(false);
-    }, 800);
-  };
-
-  const handleNewChat = () => {
-    const newId = Date.now();
-    const newTitle = {
-      id: newId,
-      title: `Chat title ${chatHistory.length + 1}`,
-      subtitle: 'New AI Conversation',
-      time: 'Just now',
-    };
-    setChatHistory([newTitle, ...chatHistory]);
-    setSelectedChatId(newId);
-    setMessages([]);
-  };
-
-  const handleDeleteChat = (e, id) => {
-    e.stopPropagation();
-    const updatedHistory = chatHistory.filter((chatItem) => chatItem.id !== id);
-    setChatHistory(updatedHistory);
-    
-    // If deleted chat was active, select another chat or clear messages
-    if (selectedChatId === id) {
-      if (updatedHistory.length > 0) {
-        setSelectedChatId(updatedHistory[0].id);
-      } else {
-        setSelectedChatId(null);
-        setMessages([]);
-      }
-    }
+    await handleSendMessage({ message: messageToSend, chatId: currentChatId });
   };
 
   const handleCopyCode = (code, index) => {
@@ -121,36 +70,61 @@ const Dashboard = () => {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const filteredHistory = chatHistory.filter((item) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
+  // Format timestamp helper
+  const formatTime = (isoString) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
+  // Convert chats object into array sorted by last updated
+  const chatList = Object.values(chats || {}).sort((a, b) => {
+    const dateA = new Date(a.lastUpdated || 0);
+    const dateB = new Date(b.lastUpdated || 0);
+    return dateB - dateA;
+  });
+
+  const filteredHistory = chatList.filter((item) =>
+    (item.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="h-screen w-full flex bg-[#0c0804] text-white overflow-hidden select-none font-sans">
+    <div className="h-screen w-full flex bg-[#f8f6f2] text-slate-800 overflow-hidden select-none font-sans">
       
       {/* ========================================================================= */}
-      {/* CHAT HISTORY SIDEBAR DRAWER (QueryNest AI Header & Chat title List)      */}
+      {/* CHAT HISTORY SIDEBAR DRAWER (Vibrant Deep Orange Theme)                    */}
       {/* ========================================================================= */}
-      <section className="w-72 md:w-80 bg-[#140c06] border-r border-orange-950/40 flex flex-col p-5 space-y-4 shrink-0">
+      <section className="w-72 md:w-80 bg-gradient-to-b from-[#ff5100] via-[#f95700] to-[#e64a00] border-r border-orange-600/40 flex flex-col p-5 space-y-4 shrink-0 text-white shadow-2xl">
         
         {/* Header Title: QueryNest AI */}
-        <div className="flex items-center justify-between pb-3 border-b border-orange-900/30">
+        <div className="flex items-center justify-between pb-3 border-b border-white/20">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-600/30">
-              <Flame className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-md">
+              <Flame className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-wide">
+              <h2 className="text-base font-extrabold text-white tracking-wide">
                 QueryNest AI
               </h2>
-              <p className="text-[11px] text-orange-200/50">Smart AI Assistant</p>
+              <p className="text-[11px] text-orange-100/90 font-medium">Smart AI Assistant</p>
             </div>
           </div>
 
           <button
             onClick={handleNewChat}
-            className="p-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 text-white hover:from-orange-600 hover:to-amber-700 shadow-md shadow-orange-950/50 hover:scale-105 transition-all cursor-pointer"
+            className="p-2 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border border-white/30 shadow-md hover:scale-105 transition-all cursor-pointer"
             title="Start New Chat"
           >
             <Plus className="w-5 h-5" />
@@ -159,57 +133,63 @@ const Dashboard = () => {
 
         {/* Search Bar */}
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-orange-300/40" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3 text-white/70" />
           <input
             type="text"
             placeholder="Search chat history..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#1e1309] border border-orange-900/40 focus:border-orange-500 text-white text-xs rounded-xl pl-9 pr-3 py-2.5 outline-none transition-all placeholder:text-orange-200/40 focus:ring-1 focus:ring-orange-500/30"
+            className="w-full bg-white/20 border border-white/30 focus:border-white focus:bg-white/30 text-white text-xs rounded-xl pl-9 pr-3 py-2.5 outline-none transition-all placeholder:text-white/70 focus:ring-1 focus:ring-white/50 font-medium"
           />
         </div>
 
-        {/* List of Chat Titles in Rounded Pill Containers (No Scrollbar) */}
+        {/* List of Chat Titles (White Cards with Black Text) */}
         <div className="flex-1 overflow-y-auto no-scrollbar space-y-2.5 pr-1 py-1">
-          <p className="text-[11px] font-semibold text-orange-300/40 uppercase tracking-wider px-1">
+          <p className="text-[11px] font-extrabold text-white/90 uppercase tracking-wider px-1">
             Recent Conversations
           </p>
 
           {filteredHistory.length === 0 ? (
-            <p className="text-xs text-orange-200/30 text-center py-6">No conversations found</p>
+            <p className="text-xs text-white/80 text-center py-6 font-medium">
+              {searchQuery ? 'No matching conversations' : 'No conversations yet'}
+            </p>
           ) : (
             filteredHistory.map((item) => {
-              const isActive = selectedChatId === item.id;
+              const isActive = currentChatId === item.id;
               return (
                 <div
                   key={item.id}
-                  onClick={() => setSelectedChatId(item.id)}
-                  className={`group relative w-full p-3 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${
+                  onClick={() => handleOpenChat(item.id)}
+                  className={`group relative w-full p-3.5 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between shadow-md ${
                     isActive
-                      ? 'bg-gradient-to-r from-orange-500/20 to-amber-600/10 border-orange-500 text-white shadow-lg shadow-orange-950/40 ring-1 ring-orange-500/30'
-                      : 'bg-[#1b1007]/60 border-orange-950/40 text-orange-100 hover:border-orange-500/40 hover:bg-orange-500/10'
+                      ? 'bg-white border-2 border-slate-900 text-slate-900 shadow-xl ring-2 ring-black/20 scale-[1.02]'
+                      : 'bg-white/95 border border-white/80 text-slate-900 hover:bg-white hover:shadow-lg hover:scale-[1.01]'
                   }`}
                 >
                   <div className="flex items-center space-x-3 overflow-hidden flex-1 min-w-0">
-                    <MessageSquare className={`w-4 h-4 shrink-0 ${isActive ? 'text-orange-400' : 'text-orange-300/40 group-hover:text-orange-400'}`} />
+                    <MessageSquare className={`w-4 h-4 shrink-0 ${isActive ? 'text-orange-600' : 'text-orange-500 group-hover:text-orange-600'}`} />
                     <div className="truncate flex-1 min-w-0">
-                      <h3 className={`text-sm font-semibold truncate ${isActive ? 'text-white' : 'text-orange-100/90 group-hover:text-white'}`}>
-                        {item.title}
+                      <h3 className="text-sm font-bold text-slate-900 truncate">
+                        {item.title || 'New Chat'}
                       </h3>
-                      <p className="text-[11px] text-orange-200/40 truncate">
-                        {item.subtitle}
+                      <p className="text-[11px] text-slate-500 font-medium truncate">
+                        {item.messages && item.messages.length > 0
+                          ? `${item.messages.length} messages`
+                          : 'Click to load chat'}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2 shrink-0 ml-2">
-                    <span className="text-[10px] text-orange-300/40 group-hover:hidden">
-                      {item.time}
+                    <span className="text-[10px] text-slate-400 font-medium group-hover:hidden">
+                      {formatTime(item.lastUpdated)}
                     </span>
-                    {/* Delete Icon on Hover / Active */}
                     <button
-                      onClick={(e) => handleDeleteChat(e, item.id)}
-                      className="p-1.5 rounded-lg text-orange-300/40 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteChat(item.id);
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                       title="Delete Chat"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -223,25 +203,25 @@ const Dashboard = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* MAIN WORKSPACE / CHAT CONTAINER                                          */}
+      {/* MAIN WORKSPACE / CHAT CONTAINER (Light White Background Theme)            */}
       {/* ========================================================================= */}
-      <main className="flex-1 flex flex-col h-full bg-gradient-to-b from-[#0f0904] via-[#140c06] to-[#0c0804] relative overflow-hidden">
+      <main className="flex-1 flex flex-col h-full bg-[#f8f6f2] text-slate-800 relative overflow-hidden">
         
         {/* Top Header Bar */}
-        <header className="h-16 border-b border-orange-950/40 px-6 flex items-center justify-between bg-[#150d06]/60 backdrop-blur-md z-10">
+        <header className="h-16 border-b border-orange-200/60 px-6 flex items-center justify-between bg-white/80 backdrop-blur-md z-10">
           <div className="flex items-center space-x-3">
-            <h1 className="text-sm font-semibold text-white tracking-wide flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-orange-400" />
-              QueryNest AI
+            <h1 className="text-sm font-bold text-slate-900 tracking-wide flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-orange-500" />
+              {activeChat ? activeChat.title : 'QueryNest AI'}
             </h1>
           </div>
 
           <div className="flex items-center space-x-3">
-            {messages.length > 0 && (
+            {currentChatId && (
               <button
-                onClick={() => setMessages([])}
-                className="p-2 rounded-lg bg-[#1e1309] border border-orange-950/50 text-orange-300/70 hover:text-white hover:border-orange-500/40 transition-all cursor-pointer"
-                title="Clear Messages"
+                onClick={() => handleDeleteChat(currentChatId)}
+                className="p-2 rounded-xl bg-orange-50 border border-orange-200/80 text-orange-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all cursor-pointer shadow-sm"
+                title="Delete Current Chat"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -249,87 +229,116 @@ const Dashboard = () => {
           </div>
         </header>
 
-        {/* Message Stream Scroll Area (No Scrollbar) */}
+        {/* Message Stream Scroll Area */}
         <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-8 space-y-6 max-w-4xl mx-auto w-full">
           
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 my-auto">
-              <div className="p-4 rounded-3xl bg-gradient-to-br from-orange-500/20 to-amber-600/10 border border-orange-500/30 text-orange-400 shadow-xl shadow-orange-950/30">
+              <div className="p-4 rounded-3xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-xl shadow-orange-500/20">
                 <Flame className="w-10 h-10 animate-bounce" />
               </div>
               <div className="space-y-1">
-                <h2 className="text-xl font-bold text-white">How can QueryNest AI help you today?</h2>
-                <p className="text-xs text-orange-200/50 max-w-md">
-                  Type a message below to start a clean, high-performance conversation.
+                <h2 className="text-xl font-extrabold text-slate-900">How can QueryNest AI help you today?</h2>
+                <p className="text-xs text-slate-500 max-w-md">
+                  Type a message below to start a clean, high-performance conversation powered by real-time AI.
                 </p>
+              </div>
+
+              {/* Sample Prompt Pills */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-6 w-full max-w-lg">
+                {[
+                  'Explain quantum computing in simple terms',
+                  'Write a Python script for data processing',
+                  'How do I build a REST API in Node.js?',
+                  'Summarize the core concepts of Redux Toolkit'
+                ].map((promptText, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setInputMessage(promptText);
+                    }}
+                    className="p-3 text-left bg-white border border-orange-200/80 hover:border-orange-500/60 text-xs text-slate-700 rounded-xl hover:bg-orange-50/60 shadow-sm hover:shadow transition-all cursor-pointer font-medium"
+                  >
+                    "{promptText}"
+                  </button>
+                ))}
               </div>
             </div>
           ) : (
             messages.map((msg, index) => (
-              <div key={msg.id} className="w-full space-y-4">
+              <div key={msg.id || index} className="w-full space-y-4">
                 
-                {/* USER MESSAGE BUBBLE */}
-                {msg.sender === 'user' && (
+                {/* USER MESSAGE BUBBLE (Full Orange Shaded) */}
+                {msg.role === 'user' && (
                   <div className="flex justify-end w-full">
-                    <div className="max-w-xl bg-gradient-to-r from-orange-600 to-amber-600 border border-orange-400/40 text-white rounded-2xl rounded-tr-xs p-4 shadow-lg shadow-orange-950/40 space-y-1">
-                      <div className="flex items-center justify-between text-[11px] text-orange-100/70 pb-1 border-b border-orange-400/20 mb-1">
-                        <span className="font-semibold uppercase tracking-wider">You</span>
-                        <span>{msg.time}</span>
+                    <div className="max-w-xl bg-gradient-to-r from-orange-500 to-amber-600 border border-orange-400/40 text-white rounded-2xl rounded-tr-xs p-4 shadow-md shadow-orange-500/20 space-y-1">
+                      <div className="flex items-center justify-between text-[11px] text-orange-100/90 pb-1 border-b border-orange-400/30 mb-1">
+                        <span className="font-bold uppercase tracking-wider">You</span>
+                        <span>{formatTime(msg.createdAt)}</span>
                       </div>
                       <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">
-                        {msg.text}
+                        {msg.content}
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* AI MESSAGE CARD */}
-                {msg.sender === 'ai' && (
+                {/* AI MESSAGE CARD (White BG, Black / Dark Text) */}
+                {msg.role === 'ai' && (
                   <div className="w-full flex justify-center my-4">
-                    <div className="w-full bg-[#180f08]/80 border border-orange-500/30 rounded-2xl p-6 shadow-xl shadow-orange-950/40 backdrop-blur-xl space-y-4 hover:border-orange-500/50 transition-all">
+                    <div className="w-full bg-white border border-orange-200/80 rounded-2xl p-6 shadow-md shadow-orange-950/5 space-y-4 hover:border-orange-300 transition-all">
                       
                       {/* Header Badge */}
-                      <div className="flex items-center justify-between border-b border-orange-900/30 pb-3">
+                      <div className="flex items-center justify-between border-b border-orange-100 pb-3">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-md shadow-orange-600/30">
                             <Bot className="w-5 h-5" />
                           </div>
                           <div>
-                            <h3 className="text-sm font-bold text-white tracking-tight">
+                            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
                               QueryNest AI
                             </h3>
                           </div>
                         </div>
 
-                        <span className="text-xs text-orange-300/40 font-mono">{msg.time}</span>
+                        <span className="text-xs text-slate-400 font-mono">{formatTime(msg.createdAt)}</span>
                       </div>
 
-                      {/* AI Main Text */}
-                      <div className="space-y-3 text-white text-sm leading-relaxed font-sans">
-                        <p className="text-orange-50 font-normal">{msg.text}</p>
+                      {/* AI Main Text (Black / Dark Text) */}
+                      <div className="space-y-3 text-slate-800 text-sm leading-relaxed font-sans">
+                        <p className="font-normal whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                       </div>
 
                       {/* AI Message Action Bar */}
-                      <div className="pt-3 border-t border-orange-900/30 flex items-center justify-between text-xs text-orange-300/60">
+                      <div className="pt-3 border-t border-orange-100 flex items-center justify-between text-xs text-slate-500">
                         <div className="flex items-center space-x-3">
                           <button
-                            onClick={() => handleCopyCode(msg.text, `txt-${index}`)}
-                            className="hover:text-white transition-colors flex items-center space-x-1 cursor-pointer"
+                            onClick={() => handleCopyCode(msg.content, `txt-${index}`)}
+                            className="hover:text-orange-600 transition-colors flex items-center space-x-1 cursor-pointer"
                             title="Copy message"
                           >
                             {copiedIndex === `txt-${index}` ? (
-                              <Check className="w-4 h-4 text-emerald-400" />
+                              <Check className="w-4 h-4 text-emerald-500" />
                             ) : (
                               <Copy className="w-4 h-4" />
                             )}
                           </button>
-                          <button className="hover:text-white transition-colors cursor-pointer" title="Regenerate">
+                          <button
+                            onClick={() => {
+                              const prevUserMsg = messages[index - 1];
+                              if (prevUserMsg && prevUserMsg.role === 'user') {
+                                handleSendMessage({ message: prevUserMsg.content, chatId: currentChatId });
+                              }
+                            }}
+                            className="hover:text-orange-600 transition-colors cursor-pointer"
+                            title="Regenerate"
+                          >
                             <RotateCcw className="w-4 h-4" />
                           </button>
-                          <button className="hover:text-emerald-400 transition-colors cursor-pointer" title="Good response">
+                          <button className="hover:text-emerald-500 transition-colors cursor-pointer" title="Good response">
                             <ThumbsUp className="w-4 h-4" />
                           </button>
-                          <button className="hover:text-rose-400 transition-colors cursor-pointer" title="Bad response">
+                          <button className="hover:text-rose-500 transition-colors cursor-pointer" title="Bad response">
                             <ThumbsDown className="w-4 h-4" />
                           </button>
                         </div>
@@ -343,10 +352,10 @@ const Dashboard = () => {
             ))
           )}
 
-          {isSubmitting && (
+          {isLoading && (
             <div className="w-full flex justify-center py-4">
-              <div className="flex items-center space-x-3 bg-[#1c1209] border border-orange-500/30 px-5 py-3 rounded-2xl text-xs text-orange-300 shadow-lg">
-                <Sparkles className="w-4 h-4 text-orange-400 animate-spin" />
+              <div className="flex items-center space-x-3 bg-white border border-orange-300/70 px-5 py-3 rounded-2xl text-xs text-orange-600 shadow-md font-medium">
+                <Sparkles className="w-4 h-4 text-orange-500 animate-spin" />
                 <span>QueryNest AI is thinking...</span>
               </div>
             </div>
@@ -356,12 +365,12 @@ const Dashboard = () => {
         </div>
 
         {/* ========================================================================= */}
-        {/* CHAT INPUT AREA (Clean Pill Container with only Input & Send Button)       */}
+        {/* CHAT INPUT AREA (Light Theme Pill Input)                                  */}
         {/* ========================================================================= */}
-        <footer className="p-4 md:p-6 bg-[#120b05]/90 border-t border-orange-950/40 backdrop-blur-lg">
+        <footer className="p-4 md:p-6 bg-white/80 border-t border-orange-200/60 backdrop-blur-lg">
           <form
-            onSubmit={handleSendMessage}
-            className="max-w-3xl mx-auto bg-[#1b1109] border border-orange-500/30 hover:border-orange-500/60 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 rounded-2xl p-2.5 shadow-2xl transition-all"
+            onSubmit={onSubmit}
+            className="max-w-3xl mx-auto bg-white border border-orange-300/80 hover:border-orange-500 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 rounded-2xl p-2.5 shadow-xl transition-all"
           >
             <div className="flex items-center space-x-3 px-2">
               <input
@@ -369,17 +378,18 @@ const Dashboard = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Ask QueryNest AI anything..."
-                className="w-full bg-transparent text-white placeholder-orange-200/40 text-sm outline-none font-medium py-1.5"
+                disabled={isLoading}
+                className="w-full bg-transparent text-slate-900 placeholder-slate-400 text-sm outline-none font-medium py-1.5"
               />
 
-              {/* Submit Send Button ONLY */}
+              {/* Submit Send Button */}
               <button
                 type="submit"
-                disabled={!inputMessage.trim() || isSubmitting}
-                className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-lg ${
-                  inputMessage.trim() && !isSubmitting
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white shadow-orange-600/40 hover:scale-105'
-                    : 'bg-orange-950/40 text-orange-400/40 cursor-not-allowed border border-orange-950/60'
+                disabled={!inputMessage.trim() || isLoading}
+                className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-md ${
+                  inputMessage.trim() && !isLoading
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white shadow-orange-500/30 hover:scale-105'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                 }`}
                 title="Send Message"
               >
