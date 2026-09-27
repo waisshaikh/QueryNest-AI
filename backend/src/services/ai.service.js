@@ -59,18 +59,12 @@ export async function generateResponse(messages) {
   }
 }
 
-export async function generateChatTittle(message) {
+export async function generateChatTitle(message) {
   try {
     const response = await groqModel.invoke([
       new SystemMessage(
-        ` you are a helpfull assistant that generate concise and intresting title
-      for any chat in less than 5 words.
-
-      user will provide you the first message of a chat conversation,
-      and you will  generate a tittle that capture the essence of convarsaton in 2 to 5 words.
-      the tittle should be clear, relavent, and engaging, giving users a quick understanding of what the chat is about
-      
-    `
+        `You are a helpful assistant that generates concise and interesting titles for any chat in 2 to 5 words.
+      The title should be clear, relevant, and engaging without quotes or punctuation.`
       ),
 
       new HumanMessage(

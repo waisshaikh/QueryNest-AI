@@ -39,7 +39,7 @@ export const useChat = () => {
 
     try {
       const data = await sendMessage({ message, chatId: targetChatId });
-      const { tittle, chat, userMessage, aiMessage } = data;
+      const { title, tittle, chat, userMessage, aiMessage } = data;
       const activeChatId = targetChatId || chat?._id;
 
       // Handle newly created chat from backend
@@ -47,7 +47,7 @@ export const useChat = () => {
         dispatch(
           createNewChat({
             chatId: chat._id,
-            title: tittle || chat.tittle || chat.title || "New Chat",
+            title: title || chat.title || tittle || chat.tittle || "New Chat",
           })
         );
         dispatch(
@@ -95,7 +95,7 @@ export const useChat = () => {
       const chatMap = (chatList || []).reduce((acc, chat) => {
         acc[chat._id] = {
           id: chat._id,
-          title: chat.tittle || chat.title || "New Chat",
+          title: chat.title || chat.tittle || "New Chat",
           messages: [],
           lastUpdated: chat.updatedAt || chat.createdAt,
         };
