@@ -8,7 +8,7 @@ import { createAgent } from "langchain";
 import * as z from "zod";
 import { searchInternet } from "./internet.service.js";
 
-const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const modelName = process.env.GEMINI_MODEL || "gemini-3.5-flash";
 
 const geminiModel = new ChatGoogleGenerativeAI({
   model: modelName,
