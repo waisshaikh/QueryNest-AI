@@ -5,12 +5,15 @@ import nodeMailer from "nodemailer"
 config(); // load .env variables
 
 const transporter = nodeMailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  family: 4, // Force IPv4 to prevent ENETUNREACH on Render
   auth: {
     user: process.env.GOOGLE_USER,
     pass: process.env.GOOGLE_APP_PASSWORD,
-  }
-})
+  },
+});
 
 transporter.verify((error) => {
   if (error) {
