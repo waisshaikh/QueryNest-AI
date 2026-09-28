@@ -26,6 +26,9 @@ export function useAuth() {
             dispatch(setLoading(true));
             dispatch(setError(null));
             const data = await login({ email, password });
+            if (data.token) {
+                localStorage.setItem("token", data.token);
+            }
             dispatch(setUser(data.user));
             return { success: true, data };
         } catch(error) {
@@ -47,6 +50,9 @@ export function useAuth() {
             dispatch(setUser(data.user));
             dispatch(setError(null));
         } catch(err) {
+            if (err.response?.status === 401) {
+                localStorage.removeItem("token");
+            }
             dispatch(setUser(null));
             dispatch(setError(null));
         } finally {
@@ -57,11 +63,13 @@ export function useAuth() {
     async function handleLogout() {
         try {
             dispatch(setLoading(true));
+            localStorage.removeItem("token");
             await logout();
             dispatch(setUser(null));
             dispatch(setError(null));
             return { success: true };
         } catch(err) {
+            localStorage.removeItem("token");
             dispatch(setUser(null));
             dispatch(setError(null));
             return { success: true };

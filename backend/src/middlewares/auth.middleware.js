@@ -2,7 +2,16 @@ import jwt from "jsonwebtoken";
 import userModel from "../models/user.model.js";    
 
 export async function authMiddleware(req, res, next) {
-    const token = req.cookies.token
+    let token = req.cookies?.token;
+    if (!token && (req.headers.authorization || req.headers.Authorization)) {
+        const authHeader = req.headers.authorization || req.headers.Authorization;
+        if (authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7).trim();
+        } else {
+            token = authHeader.trim();
+        }
+    }
+
     if (!token) {
         return res.status(401).json({
             message: "Unauthorized",

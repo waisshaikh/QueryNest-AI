@@ -16,8 +16,11 @@ export const initializeSocketConnection = ()=>{
         return () => {};
     }
 
+    const token = localStorage.getItem("token");
     socket = io(getSocketUrl(), {
-        withCredentials: true
+        withCredentials: true,
+        auth: { token },
+        extraHeaders: token ? { Authorization: `Bearer ${token}` } : {}
     })
 
     socket.on("connect",()=>{

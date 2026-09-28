@@ -161,6 +161,7 @@ export async function login(req, res) {
         return res.cookie("token", token, cookieOptions).status(200).json({
             message: "Login Successfully",
             success: true,
+            token,
             user: {
                 id: user._id,
                 username: user.username,
@@ -240,7 +241,16 @@ export async function verifyEmail(req, res) {
     user.verified = true;
         await user.save();
 
-        const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+        let rawFrontendUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.VERCEL_URL;
+        let frontendUrl = "http://localhost:5173";
+
+        if (rawFrontendUrl) {
+            frontendUrl = rawFrontendUrl.trim();
+            if (!frontendUrl.startsWith("http://") && !frontendUrl.startsWith("https://")) {
+                frontendUrl = `https://${frontendUrl}`;
+            }
+            frontendUrl = frontendUrl.replace(/\/$/, "");
+        }
 
         const html = `
         <!DOCTYPE html>
