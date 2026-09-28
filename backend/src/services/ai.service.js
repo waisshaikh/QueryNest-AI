@@ -8,11 +8,7 @@ import { createAgent } from "langchain";
 import * as z from "zod";
 import { searchInternet } from "./internet.service.js";
 
-<<<<<<< HEAD
 // const modelName = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-=======
-const modelName = process.env.GEMINI_MODEL || "gemini-3.6-flash";
->>>>>>> 6186b049549e0a219ea8270e0ead8f0a9fd7ecbe
 
 // const geminiModel = new ChatGoogleGenerativeAI({
 //   model: modelName,
@@ -42,7 +38,7 @@ const searchInternetTool = tool(
 
 const agent = createAgent({
   // model: geminiModel,
-  model:groqModel,
+  model: groqModel,
   tools: [searchInternetTool],
 });
 
@@ -77,12 +73,18 @@ export async function generateResponse(messages) {
           return null;
         })
         .filter(Boolean);
-      const fallbackResponse = await geminiModel.invoke(formattedMessages);
+
+      // const fallbackResponse = await geminiModel.invoke(formattedMessages);
+      // return typeof fallbackResponse.content === "string"
+      //   ? fallbackResponse.content
+      //   : fallbackResponse.text;
+
+      const fallbackResponse = await groqModel.invoke(formattedMessages);
       return typeof fallbackResponse.content === "string"
         ? fallbackResponse.content
         : fallbackResponse.text;
     } catch (fallbackError) {
-      console.error("Gemini AI Fallback Error:", fallbackError.message);
+      console.error("Groq AI Fallback Error:", fallbackError.message);
       throw new Error(`AI Service Error: ${error.message}`);
     }
   }
