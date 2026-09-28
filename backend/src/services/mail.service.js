@@ -5,13 +5,18 @@ import nodeMailer from "nodemailer"
 config(); // load .env variables
 
 const transporter = nodeMailer.createTransport({
+  service: "gmail",
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  family: 4, // Force IPv4 to prevent ENETUNREACH on Render
+  port: 587,
+  secure: false,
+  requireTLS: true,
+  family: 4,
   auth: {
     user: process.env.GOOGLE_USER,
     pass: process.env.GOOGLE_APP_PASSWORD,
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
 });
 
