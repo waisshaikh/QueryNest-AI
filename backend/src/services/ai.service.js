@@ -8,13 +8,13 @@ import { createAgent } from "langchain";
 import * as z from "zod";
 import { searchInternet } from "./internet.service.js";
 
-const modelName = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+// const modelName = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
-const geminiModel = new ChatGoogleGenerativeAI({
-  model: modelName,
-  apiKey: process.env.GEMINI_API_KEY,
-  maxRetries: 2,
-});
+// const geminiModel = new ChatGoogleGenerativeAI({
+//   model: modelName,
+//   apiKey: process.env.GEMINI_API_KEY,
+//   maxRetries: 2,
+// });
 
 const groqModel = new ChatGroq({
   model: process.env.GROQ_MODEL || "qwen/qwen3.8-27b",
@@ -37,7 +37,8 @@ const searchInternetTool = tool(
 );
 
 const agent = createAgent({
-  model: geminiModel,
+  // model: geminiModel,
+  model:groqModel,
   tools: [searchInternetTool],
 });
 
