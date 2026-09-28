@@ -26,7 +26,7 @@ export async function register(req, res) {
             email: User.email,
         }, process.env.JWT_SECRET, { expiresIn: "1d" })
 
-        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+        const backendUrl = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3000}`;
         const verificationUrl = new URL("/api/auth/verify-email", backendUrl);
         verificationUrl.searchParams.set("token", emailVerificationToken);
 
@@ -150,7 +150,15 @@ export async function login(req, res) {
             { expiresIn: "7d" }
         );
 
-        return res.cookie("token", token).status(200).json({
+        const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true" || !!process.env.RENDER_EXTERNAL_URL;
+        const cookieOptions = {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        };
+
+        return res.cookie("token", token, cookieOptions).status(200).json({
             message: "Login Successfully",
             success: true,
             user: {
@@ -192,7 +200,12 @@ export async function getme(req, res) {
 // Logout Api
 export async function logout(req, res) {
     try {
-        res.clearCookie("token");
+        const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true" || !!process.env.RENDER_EXTERNAL_URL;
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax"
+        });
         return res.status(200).json({
             message: "Logged out successfully",
             success: true
@@ -227,6 +240,8 @@ export async function verifyEmail(req, res) {
     user.verified = true;
         await user.save();
 
+        const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
         const html = `
         <!DOCTYPE html>
         <html>
@@ -237,7 +252,7 @@ export async function verifyEmail(req, res) {
                 <h2 style="color: #2d2d2d; margin-bottom: 8px;">Email Verified Successfully!</h2>
                 <p style="color: #555;">Hi <strong>${user.username}</strong>,</p>
                 <p style="color: #555;">Your email has been verified. You can now login and use all features of <strong>QueryNest-AI</strong>.</p>
-                <a href="http://localhost:5173/login" 
+                <a href="${frontendUrl}/login" 
                    style="display: inline-block; margin-top: 20px; padding: 12px 32px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
                    Go to Login
                 </a>
