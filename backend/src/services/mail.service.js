@@ -21,24 +21,18 @@ transporter.verify((error) => {
 });
 
 
-//  send email function
-
 const sendEmail = async ({ to, subject, text, html }) => {
   console.log("📧 Sending email to:", to);
-  try {
-    const info = await transporter.sendMail({
-      from: `QuerNest <${process.env.GOOGLE_USER}>`,
-      to,
-      subject,
-      text,
-      html,
-    });
+  const info = await transporter.sendMail({
+    from: `QueryNest <${process.env.GOOGLE_USER}>`,
+    to,
+    subject,
+    text,
+    html,
+  });
 
-    console.log('Message sent: %s', info.messageId);
-    console.log('Preview URL: %s', nodeMailer.getTestMessageUrl(info));
-  } catch (error) {
-    console.error('Error sending email:', error);
-  }
+  console.log('Message sent: %s', info.messageId);
+  return info;
 };
 
 export default sendEmail
