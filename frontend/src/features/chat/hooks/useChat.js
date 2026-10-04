@@ -50,13 +50,17 @@ export const useChat = () => {
             title: title || chat.title || tittle || chat.tittle || "New Chat",
           })
         );
+      }
+
+      // Reconcile User message with backend ID & timestamp
+      if (userMessage && activeChatId) {
         dispatch(
           addNewMessage({
-            chatId: chat._id,
-            content: message,
-            role: "user",
-            id: userMessage?._id,
-            createdAt: userMessage?.createdAt,
+            chatId: activeChatId,
+            content: userMessage.content,
+            role: userMessage.role || "user",
+            id: userMessage._id,
+            createdAt: userMessage.createdAt,
           })
         );
       }

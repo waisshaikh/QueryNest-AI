@@ -43,11 +43,18 @@ const chatSlice = createSlice({
             lastUpdated: new Date().toISOString(),
           };
         }
-        // Avoid duplicate message push if already exists
-        const exists = state.chats[chatId].messages.some(
-          (m) => (id && m.id === id) || (m.content === content && m.role === role && Math.abs(new Date(m.createdAt) - new Date(createdAt || Date.now())) < 2000)
+        // Avoid duplicate message push if already exists or update existing optimistic message
+        const existingIndex = state.chats[chatId].messages.findIndex(
+          (m) => (id && m.id === id) || (m.content === content && m.role === role && Math.abs(new Date(m.createdAt) - new Date(createdAt || Date.now())) < 10000)
         );
-        if (!exists) {
+        if (existingIndex !== -1) {
+          if (id) {
+            state.chats[chatId].messages[existingIndex].id = id;
+          }
+          if (createdAt) {
+            state.chats[chatId].messages[existingIndex].createdAt = createdAt;
+          }
+        } else {
           state.chats[chatId].messages.push({
             id: id || `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
             content,

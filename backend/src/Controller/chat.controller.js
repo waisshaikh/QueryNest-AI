@@ -8,39 +8,64 @@ import { AIMessageChunk } from "@langchain/core/messages";
 export async function sendMessage (req,res){
     try {
         const { message, chat, chatId: reqChatId } = req.body;
-        const activeChatIdInput = chat || reqChatId;
+        const userId = req.user._id || req.user.id;
+        let activeChatIdInput = chat || reqChatId;
 
         let title = null;
         let newChatObj = null;
+        let activeChatId = null;
 
-        if(!activeChatIdInput){
-            title = await generateChatTitle(message);
-            newChatObj = await chatModel.create({
-                user: req.user._id || req.user.id,
-                title
+        if (activeChatIdInput) {
+            // Verify existing chat belongs to user
+            const existingChat = await chatModel.findOne({
+                _id: activeChatIdInput,
+                user: userId
             });
+            if (existingChat) {
+                activeChatId = existingChat._id;
+            }
         }
 
-        const activeChatId = activeChatIdInput || newChatObj._id;
+        if (!activeChatId) {
+            title = await generateChatTitle(message);
+            newChatObj = await chatModel.create({
+                user: userId,
+                title
+            });
+            activeChatId = newChatObj._id;
+        }
 
+        // 1. Save User Message
         const userMessage = await messageModel.create({
             chat: activeChatId,
             content: message,
             role: "user"
         });
        
+        // 2. Retrieve existing messages for AI context
         const messages = await messageModel.find({ chat: activeChatId }).sort({ createdAt: 1 });
 
-        const result = await generateResponse(messages);
-       
+        // 3. Generate AI response safely
+        let aiContent = "";
+        try {
+            aiContent = await generateResponse(messages);
+        } catch (aiErr) {
+            console.error("AI Generation Error in sendMessage:", aiErr);
+            aiContent = "I'm sorry, I encountered an issue generating a response right now. Please try again.";
+        }
+
+        // 4. Save AI Message
         const aiMessage = await messageModel.create({
             chat: activeChatId,
-            content: result,
+            content: aiContent,
             role: "ai"
         });
 
+        // 5. Update Chat timestamp to push to top of history
+        await chatModel.findByIdAndUpdate(activeChatId, { updatedAt: new Date() });
+
         res.status(201).json({
-            title,
+            title: title || (newChatObj ? newChatObj.title : null),
             chat: newChatObj,
             userMessage,
             aiMessage
