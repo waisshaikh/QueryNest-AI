@@ -26,7 +26,7 @@ export async function register(req, res) {
             email: User.email,
         }, process.env.JWT_SECRET, { expiresIn: "1d" })
 
-        const backendUrl = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3000}`;
+        const backendUrl = process.env.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || "https://ai.waisshaikh.com";
         const verificationUrl = new URL("/api/auth/verify-email", backendUrl);
         verificationUrl.searchParams.set("token", emailVerificationToken);
 
@@ -241,8 +241,8 @@ export async function verifyEmail(req, res) {
     user.verified = true;
         await user.save();
 
-        let rawFrontendUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.VERCEL_URL;
-        let frontendUrl = "http://localhost:5173";
+        let rawFrontendUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.VERCEL_URL || "https://query-nest-ai.vercel.app";
+        let frontendUrl = "https://query-nest-ai.vercel.app";
 
         if (rawFrontendUrl) {
             frontendUrl = rawFrontendUrl.trim();

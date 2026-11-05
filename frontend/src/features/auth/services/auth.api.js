@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const getAuthBaseUrl = () => {
-    let url = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+    let url = import.meta.env.VITE_API_BASE_URL || 'https://ai.waisshaikh.com/api';
     if (!url.endsWith('/api')) {
         url = url.replace(/\/$/, '') + '/api';
     }

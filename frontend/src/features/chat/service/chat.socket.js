@@ -3,7 +3,7 @@ import {io} from "socket.io-client"
 let socket = null;
 
 const getSocketUrl = () => {
-    let url = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+    let url = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_BASE_URL || 'https://ai.waisshaikh.com';
     if (url.endsWith('/api')) {
         url = url.replace(/\/api\/?$/, '');
     }
